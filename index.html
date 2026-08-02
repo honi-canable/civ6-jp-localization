@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modinfo Forge — Civ6 日本語化ファイル管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg-deep:#0a1826;
+    --bg-panel:#0f2338;
+    --bg-panel-raised:#15304a;
+    --bg-input:#0c1e30;
+    --gold:#cf9f3f;
+    --gold-bright:#e8c165;
+    --gold-dim:#7a6231;
+    --teal:#3d9e94;
+    --ink:#e9edf1;
+    --ink-dim:#9fb1c1;
+    --ink-faint:#5f7c8c;
+    --line:#274864;
+    --danger:#c0554a;
+    --danger-bright:#e2786c;
+    --ok:#4f9e6e;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 1400px 700px at 15% -10%, rgba(207,159,63,0.08), transparent 60%),
+      radial-gradient(ellipse 1000px 600px at 100% 10%, rgba(61,158,148,0.06), transparent 55%),
+      var(--bg-deep);
+    color:var(--ink);
+    font-family:'Noto Sans JP', 'Segoe UI', sans-serif;
+    min-height:100vh;
+    line-height:1.55;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 80px;}
+
+  /* ---- Header / signature ---- */
+  header.top{
+    display:flex;align-items:center;gap:18px;
+    padding:22px 26px;margin-bottom:26px;
+    background:linear-gradient(135deg, var(--bg-panel) 0%, var(--bg-panel-raised) 100%);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    position:relative;overflow:hidden;
+  }
+  header.top::before{
+    content:"";position:absolute;inset:0;
+    background-image:repeating-linear-gradient(45deg, rgba(207,159,63,0.035) 0 2px, transparent 2px 26px);
+    pointer-events:none;
+  }
+  .emblem{
+    width:52px;height:52px;flex:none;position:relative;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .emblem svg{width:100%;height:100%;}
+  header.top h1{
+    font-family:'Cinzel',serif;font-weight:700;font-size:1.5rem;
+    margin:0;letter-spacing:.03em;color:var(--gold-bright);
+    text-shadow:0 0 22px rgba(207,159,63,0.25);
+  }
+  header.top p{margin:4px 0 0;color:var(--ink-dim);font-size:.86rem;}
+
+  /* ---- Tabs ---- */
+  nav.tabs{
+    display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px;
+    border-bottom:1px solid var(--line);
+  }
+  nav.tabs button{
+    background:transparent;border:1px solid transparent;border-bottom:none;
+    color:var(--ink-dim);font-family:'Noto Sans JP',sans-serif;font-size:.92rem;font-weight:500;
+    padding:11px 18px;cursor:pointer;border-radius:var(--radius) var(--radius) 0 0;
+    display:flex;align-items:center;gap:8px;transition:all .15s ease;
+  }
+  nav.tabs button .num{
+    font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--gold-dim);
+    border:1px solid var(--gold-dim);border-radius:50%;width:18px;height:18px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  nav.tabs button:hover{color:var(--ink);background:rgba(207,159,63,0.06);}
+  nav.tabs button.active{
+    color:var(--gold-bright);background:var(--bg-panel);
+    border-color:var(--line);
+    box-shadow:inset 0 2px 0 var(--gold);
+  }
+  nav.tabs button.active .num{border-color:var(--gold);color:var(--gold-bright);}
+
+  section.panel{
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:26px;display:none;
+  }
+  section.panel.active{display:block;animation:fadein .18s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:none;}}
+
+  h2.panel-title{
+    font-family:'Cinzel',serif;font-size:1.12rem;color:var(--gold-bright);
+    margin:0 0 4px;letter-spacing:.02em;font-weight:600;
+  }
+  p.panel-desc{color:var(--ink-dim);font-size:.85rem;margin:0 0 20px;}
+
+  .divider{
+    display:flex;align-items:center;gap:10px;margin:26px 0 18px;color:var(--gold-dim);
+  }
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
+  .divider .diamond{width:7px;height:7px;background:var(--gold-dim);transform:rotate(45deg);flex:none;}
+  .divider span{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);}
+
+  /* ---- Forms ---- */
+  label{display:block;font-size:.78rem;color:var(--ink-dim);margin-bottom:5px;font-weight:500;}
+  input[type=text],input[type=number],input[type=url],textarea,select{
+    width:100%;background:var(--bg-input);border:1px solid var(--line);color:var(--ink);
+    padding:9px 11px;border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:.86rem;
+    outline:none;transition:border-color .15s;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--gold);}
+  input::placeholder,textarea::placeholder{color:var(--ink-faint);}
+  textarea{font-family:'JetBrains Mono',monospace;resize:vertical;min-height:80px;}
+  .field{margin-bottom:14px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  @media(max-width:720px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+  .checkbox-row{display:flex;align-items:center;gap:8px;}
+  .checkbox-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold);flex:none;}
+  .checkbox-row label{margin:0;color:var(--ink);font-weight:400;font-size:.85rem;cursor:pointer;}
+
+  button.btn{
+    font-family:'Noto Sans JP',sans-serif;font-weight:500;font-size:.85rem;
+    padding:9px 18px;border-radius:var(--radius);border:1px solid var(--gold-dim);
+    background:transparent;color:var(--gold-bright);cursor:pointer;transition:all .15s;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  button.btn:hover{background:rgba(207,159,63,0.12);border-color:var(--gold);}
+  button.btn.primary{background:var(--gold-dim);color:#101a24;border-color:var(--gold-dim);font-weight:700;}
+  button.btn.primary:hover{background:var(--gold);border-color:var(--gold);}
+  button.btn.ghost{border-color:var(--line);color:var(--ink-dim);}
+  button.btn.ghost:hover{color:var(--ink);border-color:var(--ink-dim);}
+  button.btn.danger{border-color:var(--danger);color:var(--danger-bright);}
+  button.btn.danger:hover{background:rgba(192,85,74,0.15);}
+  button.btn.small{padding:5px 11px;font-size:.75rem;}
+  button.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ---- Tables / lists ---- */
+  table.datatable{width:100%;border-collapse:collapse;margin-top:6px;font-size:.83rem;}
+  table.datatable th{
+    text-align:left;font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line);
+    padding:8px 8px;font-weight:500;
+  }
+  table.datatable td{padding:7px 8px;border-bottom:1px solid rgba(39,72,100,0.5);vertical-align:middle;}
+  table.datatable tr:hover td{background:rgba(207,159,63,0.03);}
+  table.datatable td input,table.datatable td select{padding:6px 8px;font-size:.8rem;}
+  .empty-row td{color:var(--ink-faint);font-style:italic;text-align:center;padding:20px;}
+
+  .tag{
+    display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.68rem;
+    padding:2px 7px;border-radius:2px;border:1px solid var(--line);color:var(--ink-dim);
+    background:var(--bg-input);
+  }
+  .tag.gold{border-color:var(--gold-dim);color:var(--gold-bright);}
+  .tag.teal{border-color:var(--teal);color:var(--teal);}
+
+  .badge-fe{color:var(--teal);border-color:var(--teal);}
+  .badge-ig{color:var(--gold-bright);border-color:var(--gold-dim);}
+
+  .hint{font-size:.76rem;color:var(--ink-faint);margin-top:4px;}
+  .err-msg{color:var(--danger-bright);font-size:.78rem;margin-top:6px;display:none;}
+  .err-msg.show{display:block;}
+
+  /* Action builder */
+  select option[hidden]{ display:none; }
+  .checklist{
+    border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-input);
+    max-height:190px;overflow-y:auto;padding:8px;
+  }
+  .checklist .item{display:flex;align-items:center;gap:9px;padding:5px 4px;font-size:.83rem;}
+  .checklist .item:not(:last-child){border-bottom:1px dashed rgba(39,72,100,0.6);}
+  .checklist .item input[type=checkbox]{accent-color:var(--gold);width:15px;height:15px;flex:none;}
+  .checklist .item .lbl{flex:1;color:var(--ink);}
+  .checklist .item .inv-toggle{display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--ink-faint);}
+  .checklist .empty{color:var(--ink-faint);font-style:italic;font-size:.8rem;padding:6px 2px;}
+  .radio-pair{display:flex;gap:10px;}
+  .radio-card{
+    flex:1;border:1px solid var(--line);border-radius:var(--radius);padding:12px;text-align:center;
+    cursor:pointer;background:var(--bg-input);transition:all .15s;
+  }
+  .radio-card input{display:none;}
+  .radio-card.selected{border-color:var(--gold);background:rgba(207,159,63,0.1);}
+  .radio-card .rc-title{font-weight:600;font-size:.85rem;color:var(--ink);}
+  .radio-card .rc-sub{font-size:.7rem;color:var(--ink-faint);margin-top:2px;}
+  .radio-card.selected .rc-title{color:var(--gold-bright);}
+
+  .action-card{
+    border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;
+    background:var(--bg-panel-raised);
+  }
+  .action-card .ac-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .action-card .ac-title{font-family:'JetBrains Mono',monospace;font-size:.86rem;color:var(--gold-bright);}
+  .action-card .ac-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .action-card .ac-crit{
+    margin-top:9px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--teal);
+    background:rgba(61,158,148,0.08);border:1px solid rgba(61,158,148,0.3);border-radius:2px;
+    padding:5px 8px;word-break:break-all;
+  }
+  .action-card .ac-files{margin-top:8px;font-size:.76rem;color:var(--ink-dim);}
+  .action-card .ac-btns{display:flex;gap:6px;flex:none;}
+
+  /* Output tab */
+  .code-block{
+    background:#08141f;border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.6;
+    white-space:pre;overflow-x:auto;color:#bcd4e6;max-height:520px;overflow-y:auto;
+  }
+  .code-block .xtag{color:var(--gold-bright);}
+  .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+  @media(max-width:720px){.summary-grid{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{
+    border:1px solid var(--line);border-radius:var(--radius);padding:14px;background:var(--bg-panel-raised);
+    text-align:center;
+  }
+  .stat-card .num{font-family:'Cinzel',serif;font-size:1.7rem;color:var(--gold-bright);font-weight:700;}
+  .stat-card .lbl{font-size:.72rem;color:var(--ink-faint);margin-top:2px;text-transform:uppercase;letter-spacing:.05em;}
+
+  .validation-box{
+    border:1px solid var(--danger);background:rgba(192,85,74,0.08);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:18px;
+  }
+  .validation-box h3{margin:0 0 6px;color:var(--danger-bright);font-size:.88rem;}
+  .validation-box ul{margin:0;padding-left:18px;font-size:.82rem;color:var(--ink);}
+  .validation-box li{margin-bottom:3px;}
+
+  .toast{
+    position:fixed;bottom:24px;right:24px;background:var(--bg-panel-raised);border:1px solid var(--gold);
+    color:var(--ink);padding:12px 18px;border-radius:var(--radius);font-size:.85rem;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:999;opacity:0;transform:translateY(8px);
+    transition:all .25s ease;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:none;}
+
+  .drop-zone{
+    border:1.5px dashed var(--line);border-radius:var(--radius);padding:30px 20px;text-align:center;
+    cursor:pointer;transition:all .15s;background:var(--bg-input);
+  }
+  .drop-zone:hover,.drop-zone.drag{border-color:var(--gold);background:rgba(207,159,63,0.05);}
+  .drop-zone .dz-title{color:var(--ink);font-size:.9rem;font-weight:500;}
+  .drop-zone .dz-sub{color:var(--ink-faint);font-size:.76rem;margin-top:4px;}
+
+  .flex-between{display:flex;justify-content:space-between;align-items:center;}
+  .path-preview{font-family:'JetBrains Mono',monospace;color:var(--teal);font-size:.78rem;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="emblem">
+      <svg viewBox="0 0 100 100">
+        <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill="none" stroke="#cf9f3f" stroke-width="2.5"/>
+        <polygon points="50,20 76,35 76,65 50,80 24,65 24,35" fill="none" stroke="#e8c165" stroke-width="1.5"/>
+        <circle cx="50" cy="50" r="7" fill="#3d9e94"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Modinfo Forge</h1>
+      <p>Civilization VI 日本語化パッチ用 .modinfo ジェネレーター</p>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="tab-github"><span class="num">1</span>GitHub連携</button>
+    <button class="tab-btn" data-tab="tab-mods"><span class="num">2</span>親MOD</button>
+    <button class="tab-btn" data-tab="tab-reqs"><span class="num">3</span>Requirements</button>
+    <button class="tab-btn" data-tab="tab-files"><span class="num">4</span>ファイル</button>
+    <button class="tab-btn" data-tab="tab-actions"><span class="num">5</span>Actions</button>
+    <button class="tab-btn" data-tab="tab-output"><span class="num">6</span>出力</button>
+  </nav>
+
+  <!-- TAB 0: GitHub SYNC -->
+  <section class="panel active" id="tab-github">
+    <h2 class="panel-title">GitHub連携 — チームで1つのMODを管理</h2>
+    <p class="panel-desc">親MOD・Requirements・Actions・翻訳ファイルはすべて指定したGitHubリポジトリに保存されます。同じリポジトリを指すメンバーは「読み込む」でお互いの変更を取得し、「保存する」で反映できます。<br>アクセストークンはこのブラウザのメモリ上でのみ使用され、保存・送信されることはありません（プロジェクトファイルにも含まれません）。</p>
+
+    <div class="grid2">
+      <div class="field">
+        <label>リポジトリ owner/organization</label>
+        <input type="text" id="gh-owner" placeholder="例: your-github-name">
+      </div>
+      <div class="field">
+        <label>リポジトリ名</label>
+        <input type="text" id="gh-repo" placeholder="例: civ6-jp-translation">
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>ブランチ</label>
+        <input type="text" id="gh-branch" placeholder="main" value="main">
+      </div>
+      <div class="field">
+        <label>プロジェクト定義ファイルのパス</label>
+        <input type="text" id="gh-path" placeholder="civ6-modinfo-project.json" value="civ6-modinfo-project.json">
+      </div>
+    </div>
+    <div class="field">
+      <label>Personal Access Token（repo権限・contents/pull-requestsの read/write）</label>
+      <input type="text" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      <div class="hint">Fine-grained PAT の場合は対象リポジトリに対する Contents と Pull requests の Read and write 権限が必要です。</div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 6px;">
+      <button class="btn primary" onclick="loadFromGithub()">⬇ 最新版を読み込む</button>
+      <button class="btn ghost" onclick="importFilesFromRepo()">リポジトリ内の .xml/.sql を取り込む</button>
+    </div>
+    <div class="hint" id="gh-status-line">未接続</div>
+
+    <div class="divider"><div class="diamond"></div><span>変更を提案する（推奨）</span><div class="diamond"></div></div>
+    <p class="panel-desc">ベースブランチ（<span class="tag" id="gh-base-branch-tag">main</span>）には直接書き込まず、新しいブランチにコミットしてプルリクエストを作成します。中身はGitHub上のPR画面で差分レビューしてからマージできます。</p>
+    <div class="grid2">
+      <div class="field">
+        <label>作業ブランチ名</label>
+        <input type="text" id="gh-pr-branch" placeholder="translate-update-...">
+      </div>
+      <div class="field">
+        <label>PRタイトル</label>
+        <input type="text" id="gh-pr-title" placeholder="翻訳ファイルを更新" value="翻訳ファイルを更新">
+      </div>
+    </div>
+    <div class="field">
+      <label>PR本文（任意）</label>
+      <textarea id="gh-pr-body" placeholder="変更内容のメモなど"></textarea>
+    </div>
+    <button class="btn primary" onclick="proposeChangesAsPR()">🔀 変更を提案する（プルリクエストを作成）</button>
+    <div class="hint" id="gh-pr-link" style="margin-top:8px;"></div>
+
+    <div class="divider"><div class="diamond"></div><span>上級者向け：直接保存</span><div class="diamond"></div></div>
+    <p class="panel-desc">レビューを挟まず、ベースブランチへ直接コミットします。自分だけで作業している場合など、限定的な用途を想定しています。</p>
+    <button class="btn ghost" onclick="saveToGithub()">⬆ ベースブランチへ直接保存</button>
+
+    <div class="divider"><div class="diamond"></div><span>同期ログ</span><div class="diamond"></div></div>
+    <div class="code-block" id="gh-log" style="max-height:260px;">まだ操作はありません。</div>
+
+    <div class="divider"><div class="diamond"></div><span>リポジトリから取り込むファイル</span><div class="diamond"></div></div>
+    <div id="gh-import-list"><p class="hint">「リポジトリ内の .xml/.sql を取り込む」を押すとここに一覧が表示されます。</p></div>
+  </section>
+
+  <!-- TAB: Mods -->
+  <section class="panel" id="tab-mods">
+    <h2 class="panel-title">親MODリスト</h2>
+    <p class="panel-desc">翻訳対象となる元MOD、および Criteria 判定に使う submod をここに登録します。<b>name</b> は Criteria 名の生成に使われるため半角英数字（と - _）のみ使用してください。</p>
+    <div class="field">
+      <label>検索（ID・name・表示名・URLで絞り込み）</label>
+      <input type="text" id="mods-search" placeholder="表示名などで検索..." oninput="renderMods()">
+    </div>
+    <table class="datatable" id="mods-table">
+      <thead><tr><th style="width:26%">ID（必須・一意）</th><th style="width:20%">name（必須・一意・半角）</th><th style="width:26%">URL</th><th style="width:20%">表示名</th><th style="width:8%"></th></tr></thead>
+      <tbody id="mods-tbody"></tbody>
+    </table>
+    <div style="margin-top:14px;">
+      <button class="btn primary" onclick="addMod()">+ 親MODを追加</button>
+    </div>
+  </section>
+
+  <!-- TAB 3: Requirements -->
+  <section class="panel" id="tab-reqs">
+    <h2 class="panel-title">Requirements（要求条件）</h2>
+    <p class="panel-desc">Criteria ブロック内に挿入する XML 条件断片を手動で入力します（例: <span class="tag">&lt;GameCoreVersionMatches&gt;...&lt;/GameCoreVersionMatches&gt;</span>）。Actions からこのリストを選択して Criteria に組み込みます。</p>
+    <div id="reqs-list"></div>
+    <div style="margin-top:14px;">
+      <button class="btn primary" onclick="addRequirement()">+ Requirementを追加</button>
+    </div>
+  </section>
+
+  <!-- TAB 4: Files -->
+  <section class="panel" id="tab-files">
+    <h2 class="panel-title">適用ファイル</h2>
+    <p class="panel-desc">.xml / .sql の翻訳ファイルをアップロードします。各ファイルは「親MOD」ごとのフォルダに格納され（フォルダ名 = MODのID）、その下に任意のサブパスを指定できます。</p>
+    <div class="drop-zone" id="drop-zone">
+      <div class="dz-title">クリックしてファイルを選択、またはドラッグ＆ドロップ</div>
+      <div class="dz-sub">.xml / .sql のみ対象・複数選択可</div>
+      <input type="file" id="file-input" multiple accept=".xml,.sql" style="display:none;">
+    </div>
+    <div class="divider"><div class="diamond"></div><span>アップロード済みファイル</span><div class="diamond"></div></div>
+    <table class="datatable" id="files-table">
+      <thead><tr><th style="width:20%">ファイル名</th><th style="width:18%">格納先MOD（フォルダ）*</th><th style="width:22%">サブパス（任意）</th><th style="width:20%">出力パス</th><th style="width:12%">状態</th><th style="width:8%"></th></tr></thead>
+      <tbody id="files-tbody"></tbody>
+    </table>
+  </section>
+
+  <!-- TAB 5: Actions -->
+  <section class="panel" id="tab-actions">
+    <h2 class="panel-title" id="action-form-title">Actionを追加</h2>
+    <p class="panel-desc">mod / submods / requirements の組み合わせから Criteria が自動生成されます。loadOrder と FrontEnd/InGame の区分は入力必須です。</p>
+
+    <div class="field">
+      <label>Mod（必須・Criteriaの主対象）</label>
+      <input type="text" id="a-mod-search" placeholder="表示名などで検索..." oninput="filterModSelect()" style="margin-bottom:8px;">
+      <select id="a-mod" onchange="renderActionForm()"></select>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>Submods（複数選択可・Inverseで否定条件）</label>
+        <input type="text" id="a-submods-search" placeholder="表示名などで検索..." oninput="renderActionForm()" style="margin-bottom:8px;">
+        <div class="checklist" id="a-submods"></div>
+      </div>
+      <div class="field">
+        <label>Requirements（複数選択可）</label>
+        <div class="checklist" id="a-reqs"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label>LoadOrder（数値・必須／0も可）</label>
+        <input type="number" id="a-loadorder" placeholder="未入力＝未設定" step="1">
+      </div>
+      <div class="field">
+        <label>区分（必須）</label>
+        <div class="radio-pair">
+          <div class="radio-card" id="a-fe-card" onclick="setFrontEnd(true)">
+            <input type="radio" name="a-isfe">
+            <div class="rc-title">FrontEndActions</div>
+            <div class="rc-sub">メニュー画面等のテキスト</div>
+          </div>
+          <div class="radio-card" id="a-ig-card" onclick="setFrontEnd(false)">
+            <input type="radio" name="a-isfe">
+            <div class="rc-title">InGameActions</div>
+            <div class="rc-sub">ゲーム内のテキスト</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Files（適用ファイルを選択）</label>
+      <div class="checklist" id="a-files"></div>
+    </div>
+
+    <div class="field" id="a-crit-preview-wrap" style="display:none;">
+      <label>生成される Criteria ID（プレビュー）</label>
+      <div class="ac-crit" id="a-crit-preview" style="font-size:.8rem;"></div>
+    </div>
+
+    <div class="err-msg" id="a-err"></div>
+
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <button class="btn primary" onclick="submitAction()">Actionを保存</button>
+      <button class="btn ghost" id="a-cancel-btn" style="display:none;" onclick="cancelEditAction()">編集をキャンセル</button>
+    </div>
+
+    <div class="divider"><div class="diamond"></div><span>登録済み Actions</span><div class="diamond"></div></div>
+    <div id="actions-list"></div>
+  </section>
+
+  <!-- TAB 6: Output -->
+  <section class="panel" id="tab-output">
+    <h2 class="panel-title">プレビュー & エクスポート</h2>
+    <p class="panel-desc">ActionCriteria / FrontEndActions / InGameActions / Files を生成します。<b>Properties はこのツールでは編集しません。</b>別の独立したファイルとして管理されているものを読み込み、出力時に自動でマージします。</p>
+
+    <div class="grid3">
+      <div class="field">
+        <label>Mod ID（ルート要素の id属性）</label>
+        <input type="text" id="out-mod-id" placeholder="未入力なら自動生成" oninput="syncRootMeta()">
+      </div>
+      <div class="field">
+        <label>Version（ルート要素の version属性）</label>
+        <input type="text" id="out-mod-version" placeholder="1" value="1" oninput="syncRootMeta()">
+      </div>
+      <div class="field">
+        <label>出力ファイル名（ベース名）</label>
+        <input type="text" id="out-base-name" placeholder="translation" value="translation">
+      </div>
+    </div>
+
+    <div class="divider"><div class="diamond"></div><span>Properties（独立ファイルをマージ）</span><div class="diamond"></div></div>
+    <p class="panel-desc">&lt;Properties&gt;...&lt;/Properties&gt; を含むXMLファイルを1つ用意し、GitHubから読み込むか、ローカルファイルとして選択してください。出力時に自動で &lt;Mod&gt; タグの直後に挿入されます。このツール上では編集できません（読み込み専用）。</p>
+    <div class="grid2">
+      <div class="field">
+        <label>GitHub上のパス</label>
+        <input type="text" id="props-file-path" placeholder="Properties.xml" value="Properties.xml">
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <div style="display:flex;gap:8px;">
+          <button class="btn ghost" onclick="loadPropertiesFromGithub()">GitHubから読み込む</button>
+          <button class="btn ghost" onclick="document.getElementById('props-file-input').click()">ローカルファイルを選択</button>
+          <input type="file" id="props-file-input" accept=".xml" style="display:none;" onchange="loadPropertiesFromLocal(this.files)">
+        </div>
+      </div>
+    </div>
+    <div class="hint" id="props-status">未読み込み（Propertiesなしで出力されます）</div>
+    <div class="code-block" id="props-preview" style="max-height:160px;display:none;margin-top:8px;"></div>
+    <button class="btn ghost small" id="props-clear-btn" style="display:none;margin-top:8px;" onclick="clearPropertiesFile()">クリア</button>
+
+    <div class="summary-grid">
+      <div class="stat-card"><div class="num" id="s-mods">0</div><div class="lbl">親MOD</div></div>
+      <div class="stat-card"><div class="num" id="s-actions">0</div><div class="lbl">Actions</div></div>
+      <div class="stat-card"><div class="num" id="s-crit">0</div><div class="lbl">Criteria</div></div>
+      <div class="stat-card"><div class="num" id="s-files">0</div><div class="lbl">出力ファイル</div></div>
+    </div>
+
+    <div id="validation-area"></div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+      <button class="btn primary" onclick="downloadZip()">⬇ ZIP をダウンロード（.modinfo + ファイル一式）</button>
+      <button class="btn primary" onclick="proposeChangesAsPR()">🔀 GitHubへ変更を提案する（PR）</button>
+      <button class="btn ghost" onclick="refreshOutput()">プレビューを更新</button>
+    </div>
+
+    <div class="divider"><div class="diamond"></div><span>.modinfo プレビュー</span><div class="diamond"></div></div>
+    <div class="code-block" id="xml-preview">（「プレビューを更新」を押すと生成されます）</div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   STATE
+========================================================= */
+let state = {
+  rootMeta: { id:'', version:'1' },
+  propertiesFile: { content:'', source:'', path:'' },
+  mods: [],
+  requirements: [],
+  files: [],
+  actions: []
+};
+
+let editingActionId = null;
+// transient form state for action builder
+let formState = { mod:'', submods:{}, reqs:{}, files:{}, isFrontEnd:null };
+
+function uid(prefix){
+  const rnd = (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random().toString(16).slice(2)));
+  return (prefix?prefix+'_':'') + rnd.slice(0,8);
+}
+function escapeXml(str){
+  return String(str==null?'':str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+}
+function sanitizeToken(s){ return String(s||'').replace(/[^A-Za-z0-9_\-]/g,''); }
+function isAscii(s){ return /^[\x21-\x7E]+$/.test(s||''); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* =========================================================
+   TABS
+========================================================= */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'tab-actions') renderActionForm();
+    if(btn.dataset.tab === 'tab-output') refreshOutput();
+  });
+});
+
+/* =========================================================
+   ROOT ELEMENT META (id/version only — Properties block is
+   authored separately by the user, so it's intentionally not
+   part of this tool's UI or output)
+========================================================= */
+function syncRootMeta(){
+  state.rootMeta.id = document.getElementById('out-mod-id').value.trim();
+  state.rootMeta.version = document.getElementById('out-mod-version').value.trim() || '1';
+}
+
+/* =========================================================
+   PROPERTIES (external file, read-only, merged at generation time)
+========================================================= */
+function renderPropertiesStatus(){
+  const statusEl = document.getElementById('props-status');
+  const previewEl = document.getElementById('props-preview');
+  const clearBtn = document.getElementById('props-clear-btn');
+  if(!state.propertiesFile.content){
+    statusEl.textContent = '未読み込み（Propertiesなしで出力されます）';
+    previewEl.style.display = 'none';
+    clearBtn.style.display = 'none';
+    return;
+  }
+  const srcLabel = state.propertiesFile.source==='github' ? `GitHub（${state.propertiesFile.path}）` : 'ローカルファイル';
+  statusEl.textContent = `読み込み済み: ${srcLabel}`;
+  previewEl.style.display = 'block';
+  previewEl.textContent = state.propertiesFile.content;
+  clearBtn.style.display = 'inline-flex';
+}
+async function loadPropertiesFromGithub(){
+  let cfg;
+  try{ cfg = ghConfig(); ghValidateConfig(cfg); }catch(e){ showToast(e.message); return; }
+  const path = document.getElementById('props-file-path').value.trim();
+  if(!path){ showToast('GitHub上のパスを入力してください。'); return; }
+  try{
+    const got = await ghGetFile(cfg, path);
+    if(!got){ showToast(`${path} が見つかりませんでした。`); return; }
+    state.propertiesFile = { content: got.content, source:'github', path };
+    renderPropertiesStatus();
+    showToast('Propertiesを読み込みました');
+  }catch(e){
+    showToast('読み込みに失敗しました: ' + e.message);
+  }
+}
+function loadPropertiesFromLocal(fileList){
+  const f = fileList[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    state.propertiesFile = { content: ev.target.result, source:'local', path: f.name };
+    renderPropertiesStatus();
+    showToast('Propertiesを読み込みました');
+  };
+  reader.readAsText(f);
+  document.getElementById('props-file-input').value = '';
+}
+function clearPropertiesFile(){
+  state.propertiesFile = { content:'', source:'', path:'' };
+  renderPropertiesStatus();
+}
+
+/* =========================================================
+   TAB: MODS
+========================================================= */
+function addMod(){
+  state.mods.push({ id:'', name:'', url:'', displayName:'', _key: uid('mod') });
+  renderMods();
+}
+function updateMod(key, field, value){
+  const m = state.mods.find(x=>x._key===key);
+  if(m) m[field] = value;
+  if(field==='id' || field==='name'){ renderModsRelatedUI(); }
+}
+function deleteMod(key){
+  if(!confirm('この親MODを削除しますか？関連するActions/Filesの参照も見直してください。')) return;
+  state.mods = state.mods.filter(x=>x._key!==key);
+  renderMods();
+  renderModsRelatedUI();
+}
+function renderMods(){
+  const tbody = document.getElementById('mods-tbody');
+  const searchEl = document.getElementById('mods-search');
+  const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  const filtered = !q ? state.mods : state.mods.filter(m=>
+    (m.name||'').toLowerCase().includes(q) ||
+    (m.displayName||'').toLowerCase().includes(q) ||
+    (m.id||'').toLowerCase().includes(q) ||
+    (m.url||'').toLowerCase().includes(q)
+  );
+  if(state.mods.length===0){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">まだ親MODが登録されていません</td></tr>';
+    return;
+  }
+  if(filtered.length===0){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">検索条件に一致する親MODがありません</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(m=>`
+    <tr>
+      <td><input type="text" value="${escapeAttr(m.id)}" placeholder="mod-guid" oninput="updateMod('${m._key}','id',this.value)"></td>
+      <td><input type="text" value="${escapeAttr(m.name)}" placeholder="AsciiName" oninput="updateMod('${m._key}','name',this.value)"></td>
+      <td><input type="text" value="${escapeAttr(m.url)}" placeholder="https://..." oninput="updateMod('${m._key}','url',this.value)"></td>
+      <td><input type="text" value="${escapeAttr(m.displayName)}" placeholder="表示名" oninput="updateMod('${m._key}','displayName',this.value)"></td>
+      <td><button class="btn danger small" onclick="deleteMod('${m._key}')">削除</button></td>
+    </tr>
+  `).join('');
+}
+function escapeAttr(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
+function jsStrArg(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+function renderModsRelatedUI(){
+  // refresh anything downstream that depends on mods list
+  renderFiles();
+  renderActionForm();
+  renderActionsList();
+}
+
+/* =========================================================
+   TAB 3: REQUIREMENTS
+========================================================= */
+function addRequirement(){
+  state.requirements.push({ id: uid('req'), xml:'' , _key: uid('rk')});
+  renderRequirements();
+}
+function updateReq(key, field, value){
+  const r = state.requirements.find(x=>x._key===key);
+  if(r) r[field]=value;
+  if(field==='id'){ renderActionForm(); renderActionsList(); }
+}
+function deleteReq(key){
+  if(!confirm('このRequirementを削除しますか？')) return;
+  state.requirements = state.requirements.filter(x=>x._key!==key);
+  renderRequirements();
+  renderActionForm();
+  renderActionsList();
+}
+function renderRequirements(){
+  const wrap = document.getElementById('reqs-list');
+  if(state.requirements.length===0){
+    wrap.innerHTML = '<p class="hint">まだRequirementが登録されていません。</p>';
+    return;
+  }
+  wrap.innerHTML = state.requirements.map(r=>`
+    <div class="action-card">
+      <div class="grid2">
+        <div class="field" style="margin-bottom:8px;">
+          <label>Requirement ID（一意）</label>
+          <input type="text" value="${escapeAttr(r.id)}" oninput="updateReq('${r._key}','id',this.value)">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>XML条件データ</label>
+        <textarea oninput="updateReq('${r._key}','xml',this.value)" placeholder="&lt;GameCoreVersionMatches&gt;...&lt;/GameCoreVersionMatches&gt;">${escapeXml(r.xml)}</textarea>
+      </div>
+      <div style="margin-top:8px;text-align:right;">
+        <button class="btn danger small" onclick="deleteReq('${r._key}')">削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* =========================================================
+   TAB 4: FILES
+========================================================= */
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+dropZone.addEventListener('click', ()=>fileInput.click());
+dropZone.addEventListener('dragover', e=>{e.preventDefault();dropZone.classList.add('drag');});
+dropZone.addEventListener('dragleave', ()=>dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e=>{
+  e.preventDefault(); dropZone.classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e=> handleFiles(e.target.files));
+
+function handleFiles(fileList){
+  const arr = Array.from(fileList);
+  let rejected = [];
+  let pending = arr.filter(f=>{
+    const ext = f.name.split('.').pop().toLowerCase();
+    if(ext!=='xml' && ext!=='sql'){ rejected.push(f.name); return false; }
+    return true;
+  });
+  if(rejected.length){
+    showToast(`.xml / .sql 以外は無視しました: ${rejected.join(', ')}`);
+  }
+  let remaining = pending.length;
+  if(remaining===0) return;
+  pending.forEach(f=>{
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      state.files.push({
+        _key: uid('file'),
+        fileName: f.name,
+        modId: '',
+        subPath: '',
+        content: ev.target.result,
+        source: 'local',
+        dirty: true,
+        originalPath: null
+      });
+      remaining--;
+      if(remaining===0){ renderFiles(); showToast(`${pending.length}件のファイルを読み込みました`); }
+    };
+    reader.readAsText(f);
+  });
+  fileInput.value = '';
+}
+
+function updateFile(key, field, value){
+  const f = state.files.find(x=>x._key===key);
+  if(f){
+    f[field]=value;
+    if(field==='modId' || field==='subPath') f.dirty = true;
+  }
+  renderFiles();
+  renderActionForm();
+}
+let pendingGithubDeletes = []; // paths to remove from repo on next save
+function deleteFile(key){
+  const f = state.files.find(x=>x._key===key);
+  if(f && f.source==='github' && f.originalPath){
+    pendingGithubDeletes.push(f.originalPath);
+  }
+  state.files = state.files.filter(x=>x._key!==key);
+  renderFiles();
+  renderActionForm();
+  renderActionsList();
+}
+function filePath(f){
+  return [f.modId, f.subPath, f.fileName].filter(Boolean).join('/');
+}
+function renderFiles(){
+  const tbody = document.getElementById('files-tbody');
+  if(state.files.length===0){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">まだファイルがアップロードされていません</td></tr>';
+    return;
+  }
+  const modOptions = m=> state.mods.map(mm=>`<option value="${escapeAttr(mm.id)}" ${mm.id===m?'selected':''}>${escapeAttr(mm.displayName||mm.name||'(未設定ID)')}${mm.displayName?'（'+escapeAttr(mm.name||mm.id)+'）':''}</option>`).join('');
+  tbody.innerHTML = state.files.map(f=>{
+    let statusTag;
+    if(f.source==='github' && f.dirty) statusTag = '<span class="tag gold">GitHub（未保存の変更）</span>';
+    else if(f.source==='github') statusTag = '<span class="tag teal">GitHub同期済み</span>';
+    else statusTag = '<span class="tag">ローカルのみ</span>';
+    return `
+    <tr>
+      <td>${escapeXml(f.fileName)}</td>
+      <td>
+        <select onchange="updateFile('${f._key}','modId',this.value)">
+          <option value="">-- 選択 --</option>
+          ${modOptions(f.modId)}
+        </select>
+      </td>
+      <td><input type="text" value="${escapeAttr(f.subPath)}" placeholder="例: Text/ja_JP" oninput="updateFile('${f._key}','subPath',this.value)"></td>
+      <td><span class="path-preview" style="${f.modId ? '' : 'color:#c0554a'}">${f.modId ? escapeXml(filePath(f)) : 'MOD未選択'}</span></td>
+      <td>${statusTag}</td>
+      <td><button class="btn danger small" onclick="deleteFile('${f._key}')">削除</button></td>
+    </tr>
+  `;}).join('');
+}
+
+/* =========================================================
+   TAB 5: ACTIONS
+========================================================= */
+function filterModSelect(){
+  const searchEl = document.getElementById('a-mod-search');
+  const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  const modSel = document.getElementById('a-mod');
+  Array.from(modSel.options).forEach(opt=>{
+    if(!opt.value){ opt.hidden = false; return; }
+    const hay = opt.getAttribute('data-search') || '';
+    opt.hidden = q ? !hay.includes(q) : false;
+  });
+}
+function renderActionForm(){
+  const modSel = document.getElementById('a-mod');
+  const prevVal = formState.mod;
+  modSel.innerHTML = '<option value="">-- 選択してください --</option>' +
+    state.mods.map(m=>{
+      const label = m.displayName ? `${escapeAttr(m.displayName)}（${escapeAttr(m.name||'name未設定')}）` : escapeAttr(m.name||'(name未設定)');
+      return `<option value="${escapeAttr(m.id)}" data-search="${escapeAttr(((m.displayName||'')+' '+(m.name||'')+' '+(m.id||'')).toLowerCase())}" ${m.id===prevVal?'selected':''}>${label}</option>`;
+    }).join('');
+  modSel.value = prevVal || '';
+  formState.mod = modSel.value;
+  filterModSelect();
+
+  // submods checklist (exclude the selected main mod), filtered by search box
+  const subWrap = document.getElementById('a-submods');
+  const subSearchEl = document.getElementById('a-submods-search');
+  const subQ = (subSearchEl ? subSearchEl.value : '').trim().toLowerCase();
+  let otherMods = state.mods.filter(m=> m.id && m.id!==formState.mod);
+  if(subQ){
+    otherMods = otherMods.filter(m=>
+      (m.name||'').toLowerCase().includes(subQ) ||
+      (m.displayName||'').toLowerCase().includes(subQ) ||
+      (m.id||'').toLowerCase().includes(subQ)
+    );
+  }
+  if(otherMods.length===0){
+    subWrap.innerHTML = `<div class="empty">${subQ?'検索条件に一致するmodがありません':'選択可能な submod がありません'}</div>`;
+  } else {
+    subWrap.innerHTML = otherMods.map(m=>{
+      const checked = !!formState.submods[m.id];
+      const inv = formState.submods[m.id]?.inverse;
+      const label = m.displayName ? `${escapeXml(m.displayName)}（${escapeXml(m.name||m.id)}）` : escapeXml(m.name||m.id);
+      return `
+      <div class="item">
+        <input type="checkbox" ${checked?'checked':''} onchange="toggleSubmod('${escapeAttr(m.id)}', this.checked)">
+        <span class="lbl">${label}</span>
+        <span class="inv-toggle"><input type="checkbox" ${inv?'checked':''} ${checked?'':'disabled'} onchange="toggleSubmodInverse('${escapeAttr(m.id)}', this.checked)"> Inverse</span>
+      </div>`;
+    }).join('');
+  }
+
+  // requirements checklist
+  const reqWrap = document.getElementById('a-reqs');
+  if(state.requirements.length===0){
+    reqWrap.innerHTML = '<div class="empty">Requirementが未登録です</div>';
+  } else {
+    reqWrap.innerHTML = state.requirements.map(r=>`
+      <div class="item">
+        <input type="checkbox" ${formState.reqs[r.id]?'checked':''} onchange="toggleReq('${escapeAttr(r.id)}', this.checked)">
+        <span class="lbl">${escapeXml(r.id)}</span>
+      </div>
+    `).join('');
+  }
+
+  // files checklist
+  const filesWrap = document.getElementById('a-files');
+  if(state.files.length===0){
+    filesWrap.innerHTML = '<div class="empty">ファイルが未アップロードです</div>';
+  } else {
+    filesWrap.innerHTML = state.files.map(f=>`
+      <div class="item">
+        <input type="checkbox" ${formState.files[f._key]?'checked':''} onchange="toggleFile('${f._key}', this.checked)">
+        <span class="lbl">${escapeXml(f.fileName)} <span class="path-preview">(${f.modId?escapeXml(filePath(f)):'MOD未選択'})</span></span>
+      </div>
+    `).join('');
+  }
+
+  // frontend/ingame cards
+  document.getElementById('a-fe-card').classList.toggle('selected', formState.isFrontEnd===true);
+  document.getElementById('a-ig-card').classList.toggle('selected', formState.isFrontEnd===false);
+
+  updateCriteriaPreview();
+}
+document.getElementById('a-mod').addEventListener('change', e=>{ formState.mod = e.target.value; formState.submods={}; renderActionForm(); });
+document.getElementById('a-loadorder').addEventListener('input', updateCriteriaPreview);
+
+function toggleSubmod(modId, checked){
+  if(checked) formState.submods[modId] = { inverse:false };
+  else delete formState.submods[modId];
+  renderActionForm();
+}
+function toggleSubmodInverse(modId, checked){
+  if(formState.submods[modId]) formState.submods[modId].inverse = checked;
+  renderActionForm();
+}
+function toggleReq(reqId, checked){
+  if(checked) formState.reqs[reqId]=true; else delete formState.reqs[reqId];
+  updateCriteriaPreview();
+}
+function toggleFile(fileKey, checked){
+  if(checked) formState.files[fileKey]=true; else delete formState.files[fileKey];
+}
+function setFrontEnd(val){
+  formState.isFrontEnd = val;
+  document.getElementById('a-fe-card').classList.toggle('selected', val===true);
+  document.getElementById('a-ig-card').classList.toggle('selected', val===false);
+}
+
+function currentFormAction(){
+  return {
+    mod: formState.mod,
+    submods: Object.entries(formState.submods).map(([modId,v])=>({modId, inverse: !!v.inverse})),
+    requirements: Object.keys(formState.reqs),
+  };
+}
+function criteriaIdFor(action, modsById){
+  if(!action.mod || !modsById[action.mod]) return null;
+  const modName = sanitizeToken(modsById[action.mod].name) || sanitizeToken(action.mod);
+  let parts = [modName];
+  const subs = action.submods.slice().sort((a,b)=>{
+    const na = (modsById[a.modId]&&modsById[a.modId].name)||a.modId||'';
+    const nb = (modsById[b.modId]&&modsById[b.modId].name)||b.modId||'';
+    return na.localeCompare(nb);
+  });
+  subs.forEach(s=>{
+    const mm = modsById[s.modId];
+    const n = sanitizeToken(mm ? mm.name : s.modId);
+    parts.push((s.inverse?'Not':'Sub')+'_'+n);
+  });
+  const reqs = action.requirements.slice().sort();
+  reqs.forEach(r=> parts.push('Req_'+sanitizeToken(r)));
+  return 'Crit_' + parts.join('_');
+}
+function modsById(){ return Object.fromEntries(state.mods.filter(m=>m.id).map(m=>[m.id,m])); }
+
+function updateCriteriaPreview(){
+  const wrap = document.getElementById('a-crit-preview-wrap');
+  const box = document.getElementById('a-crit-preview');
+  const action = currentFormAction();
+  const cid = criteriaIdFor(action, modsById());
+  if(cid){
+    wrap.style.display='block';
+    box.textContent = cid;
+  } else {
+    wrap.style.display='none';
+  }
+}
+
+function resetActionForm(){
+  formState = { mod:'', submods:{}, reqs:{}, files:{}, isFrontEnd:null };
+  editingActionId = null;
+  document.getElementById('a-loadorder').value='';
+  document.getElementById('action-form-title').textContent = 'Actionを追加';
+  document.getElementById('a-cancel-btn').style.display='none';
+  document.getElementById('a-err').classList.remove('show');
+  renderActionForm();
+}
+function cancelEditAction(){ resetActionForm(); }
+
+function submitAction(){
+  const errBox = document.getElementById('a-err');
+  errBox.classList.remove('show');
+  const errors = [];
+
+  if(!formState.mod) errors.push('Mod を選択してください。');
+  const loRaw = document.getElementById('a-loadorder').value;
+  if(loRaw===''||loRaw===null) errors.push('LoadOrder を入力してください（0も有効な値です）。');
+  if(formState.isFrontEnd===null) errors.push('FrontEndActions / InGameActions のいずれかを選択してください。');
+
+  if(errors.length){
+    errBox.innerHTML = errors.map(e=>`・${e}`).join('<br>');
+    errBox.classList.add('show');
+    return;
+  }
+
+  const actionData = {
+    id: editingActionId || uid('act'),
+    mod: formState.mod,
+    submods: Object.entries(formState.submods).map(([modId,v])=>({modId, inverse: !!v.inverse})),
+    requirements: Object.keys(formState.reqs),
+    loadOrder: parseInt(loRaw, 10),
+    files: Object.keys(formState.files),
+    isFrontEnd: formState.isFrontEnd
+  };
+
+  if(editingActionId){
+    const idx = state.actions.findIndex(a=>a.id===editingActionId);
+    if(idx>-1) state.actions[idx] = actionData;
+    showToast('Actionを更新しました');
+  } else {
+    state.actions.push(actionData);
+    showToast('Actionを追加しました');
+  }
+  resetActionForm();
+  renderActionsList();
+}
+
+function editAction(actId){
+  const a = state.actions.find(x=>x.id===actId);
+  if(!a) return;
+  editingActionId = a.id;
+  formState.mod = a.mod;
+  formState.submods = {};
+  a.submods.forEach(s=> formState.submods[s.modId] = { inverse: s.inverse });
+  formState.reqs = {};
+  a.requirements.forEach(r=> formState.reqs[r]=true);
+  formState.files = {};
+  a.files.forEach(f=> formState.files[f]=true);
+  formState.isFrontEnd = a.isFrontEnd;
+  document.getElementById('a-loadorder').value = a.loadOrder;
+  document.getElementById('action-form-title').textContent = 'Actionを編集中';
+  document.getElementById('a-cancel-btn').style.display='inline-flex';
+  renderActionForm();
+  document.getElementById('tab-actions').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function deleteAction(actId){
+  if(!confirm('このActionを削除しますか？')) return;
+  state.actions = state.actions.filter(x=>x.id!==actId);
+  if(editingActionId===actId) resetActionForm();
+  renderActionsList();
+}
+
+function renderActionsList(){
+  const wrap = document.getElementById('actions-list');
+  if(state.actions.length===0){
+    wrap.innerHTML = '<p class="hint">まだActionが登録されていません。</p>';
+    return;
+  }
+  const mById = modsById();
+  const rById = Object.fromEntries(state.requirements.map(r=>[r.id,r]));
+  const fById = Object.fromEntries(state.files.map(f=>[f._key,f]));
+  wrap.innerHTML = state.actions.map(a=>{
+    const modName = mById[a.mod] ? (mById[a.mod].displayName ? `${mById[a.mod].displayName}（${mById[a.mod].name}）` : (mById[a.mod].name||mById[a.mod].id)) : '(不明なMOD)';
+    const cid = criteriaIdFor(a, mById) || '(生成不可: MOD参照エラー)';
+    const fileNames = a.files.map(fk=> fById[fk] ? fById[fk].fileName : '(削除済)').join(', ') || '(なし)';
+    const subBadges = a.submods.map(s=>{
+      const n = mById[s.modId] ? (mById[s.modId].name||s.modId) : s.modId;
+      return `<span class="tag ${s.inverse?'':'teal'}">${s.inverse?'NOT ':''}${escapeXml(n)}</span>`;
+    }).join(' ');
+    const reqBadges = a.requirements.map(r=>`<span class="tag gold">${escapeXml(r)}</span>`).join(' ');
+    return `
+    <div class="action-card">
+      <div class="ac-head">
+        <div>
+          <div class="ac-title">Action_${escapeXml(a.id)} <span class="tag ${a.isFrontEnd?'badge-fe':'badge-ig'}">${a.isFrontEnd?'FrontEnd':'InGame'}</span> <span class="tag">loadOrder=${a.loadOrder}</span></div>
+          <div class="ac-meta">
+            <span class="tag gold">mod: ${escapeXml(modName)}</span>
+            ${subBadges}
+            ${reqBadges}
+          </div>
+          <div class="ac-crit">${escapeXml(cid)}</div>
+          <div class="ac-files">files: ${escapeXml(fileNames)}</div>
+        </div>
+        <div class="ac-btns">
+          <button class="btn small ghost" onclick="editAction('${a.id}')">編集</button>
+          <button class="btn small danger" onclick="deleteAction('${a.id}')">削除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* =========================================================
+   XML GENERATION
+========================================================= */
+function indentLines(str, spaces){
+  const pad = ' '.repeat(spaces);
+  return String(str).split('\n').map(l=> l.trim()? pad+l : l).join('\n');
+}
+
+function buildCriteriaSet(){
+  const mById = modsById();
+  const map = new Map(); // critId -> action
+  state.actions.forEach(a=>{
+    if(!a.mod || !mById[a.mod]) return;
+    const cid = criteriaIdFor(a, mById);
+    if(cid && !map.has(cid)) map.set(cid, a);
+  });
+  return map;
+}
+
+function generateXML(){
+  const mById = modsById();
+  const rById = Object.fromEntries(state.requirements.map(r=>[r.id,r]));
+  const fById = Object.fromEntries(state.files.map(f=>[f._key,f]));
+
+  const criteriaMap = buildCriteriaSet();
+
+  // ActionCriteria block
+  let criteriaXml = '';
+  if(criteriaMap.size>0){
+    const blocks = [];
+    criteriaMap.forEach((action, cid)=>{
+      const lines = [`    <Criteria id="${escapeXml(cid)}">`];
+      const mainMod = mById[action.mod];
+      lines.push(`      <ModInUse>${escapeXml(mainMod.id)}</ModInUse>`);
+      action.submods.forEach(s=>{
+        const sm = mById[s.modId];
+        if(!sm) return;
+        if(s.inverse){
+          lines.push(`      <Not><ModInUse>${escapeXml(sm.id)}</ModInUse></Not>`);
+        } else {
+          lines.push(`      <ModInUse>${escapeXml(sm.id)}</ModInUse>`);
+        }
+      });
+      action.requirements.forEach(rid=>{
+        const req = rById[rid];
+        if(req && req.xml && req.xml.trim()){
+          lines.push(indentLines(req.xml.trim(), 6));
+        }
+      });
+      lines.push(`    </Criteria>`);
+      blocks.push(lines.join('\n'));
+    });
+    criteriaXml = `  <ActionCriteria>\n${blocks.join('\n')}\n  </ActionCriteria>`;
+  } else {
+    criteriaXml = `  <ActionCriteria>\n  </ActionCriteria>`;
+  }
+
+  // Actions blocks
+  function buildActionsBlock(list, tagName){
+    if(list.length===0) return `  <${tagName}>\n  </${tagName}>`;
+    const items = list.map(a=>{
+      const cid = criteriaIdFor(a, mById);
+      const lines = [`    <UpdateText id="Action_${escapeXml(a.id)}" criteria="${escapeXml(cid)}" loadOrder="${a.loadOrder}">`];
+      a.files.forEach(fk=>{
+        const f = fById[fk];
+        if(f && f.modId){
+          lines.push(`      <File>${escapeXml(filePath(f))}</File>`);
+        }
+      });
+      lines.push(`    </UpdateText>`);
+      return lines.join('\n');
+    });
+    return `  <${tagName}>\n${items.join('\n')}\n  </${tagName}>`;
+  }
+  const feActions = state.actions.filter(a=>a.isFrontEnd===true && a.mod && mById[a.mod]);
+  const igActions = state.actions.filter(a=>a.isFrontEnd===false && a.mod && mById[a.mod]);
+  const feXml = buildActionsBlock(feActions, 'FrontEndActions');
+  const igXml = buildActionsBlock(igActions, 'InGameActions');
+
+  // Files section: unique files referenced by any action
+  const referenced = new Set();
+  state.actions.forEach(a=> a.files.forEach(fk=>{
+    const f = fById[fk];
+    if(f && f.modId) referenced.add(filePath(f));
+  }));
+  const sortedPaths = Array.from(referenced).sort();
+  const filesXml = sortedPaths.length
+    ? `  <Files>\n${sortedPaths.map(p=>`    <File>${escapeXml(p)}</File>`).join('\n')}\n  </Files>`
+    : `  <Files>\n  </Files>`;
+
+  // Root wrapper — Properties is not authored here, but if an external
+  // Properties file has been loaded (GitHub or local), it gets merged
+  // in right after the opening <Mod ...> tag.
+  const modId = state.rootMeta.id || uid('mod-root');
+  const version = state.rootMeta.version || '1';
+  const propsBlock = state.propertiesFile.content && state.propertiesFile.content.trim()
+    ? indentLines(state.propertiesFile.content.trim(), 2)
+    : `  <!-- Properties 未読み込み: 出力タブから読み込んでください -->`;
+
+  const xml = [
+    `<?xml version="1.0" encoding="utf-8"?>`,
+    `<Mod id="${escapeXml(modId)}" version="${escapeXml(version)}" xmlns="ModInfo">`,
+    propsBlock,
+    criteriaXml,
+    feXml,
+    igXml,
+    filesXml,
+    `</Mod>`
+  ].join('\n');
+
+  return { xml, criteriaMap, sortedPaths, feActions, igActions };
+}
+
+function validateAll(){
+  const problems = [];
+  if(state.mods.length===0) problems.push('親MODが1件も登録されていません。');
+  state.mods.forEach((m,i)=>{
+    if(!m.id) problems.push(`親MOD #${i+1}: ID が未入力です。`);
+    if(!m.name) problems.push(`親MOD #${i+1}: name が未入力です。`);
+    else if(!isAscii(m.name)) problems.push(`親MOD「${m.name}」: name は半角英数字記号のみにしてください。`);
+  });
+  const names = state.mods.map(m=>m.name).filter(Boolean);
+  const dupNames = names.filter((n,i)=>names.indexOf(n)!==i);
+  if(dupNames.length) problems.push(`親MODのnameが重複しています: ${[...new Set(dupNames)].join(', ')}`);
+
+  if(state.actions.length===0) problems.push('Actionが1件も登録されていません。');
+  state.actions.forEach((a,i)=>{
+    if(!a.mod) problems.push(`Action #${i+1}: mod が未設定です。`);
+    if(a.loadOrder===null || a.loadOrder===undefined || isNaN(a.loadOrder)) problems.push(`Action #${i+1}: loadOrder が未設定です。`);
+    if(a.isFrontEnd===null || a.isFrontEnd===undefined) problems.push(`Action #${i+1}: FrontEnd/InGame の区分が未設定です。`);
+    a.files.forEach(fk=>{
+      const f = state.files.find(x=>x._key===fk);
+      if(f && !f.modId) problems.push(`ファイル「${f.fileName}」の格納先MODが未選択です（Action ${a.id} が参照）。`);
+    });
+  });
+  state.files.forEach(f=>{
+    if(!f.modId){
+      // only warn once already via action check; add general note if unreferenced too
+    }
+  });
+  return problems;
+}
+
+function refreshOutput(){
+  renderPropertiesStatus();
+  document.getElementById('s-mods').textContent = state.mods.length;
+  document.getElementById('s-actions').textContent = state.actions.length;
+  const { xml, criteriaMap, sortedPaths } = generateXML();
+  document.getElementById('s-crit').textContent = criteriaMap.size;
+  document.getElementById('s-files').textContent = sortedPaths.length;
+
+  const problems = validateAll();
+  const valArea = document.getElementById('validation-area');
+  if(problems.length){
+    valArea.innerHTML = `<div class="validation-box"><h3>⚠ 出力前に確認してください</h3><ul>${problems.map(p=>`<li>${escapeXml(p)}</li>`).join('')}</ul></div>`;
+  } else {
+    valArea.innerHTML = '';
+  }
+
+  document.getElementById('xml-preview').textContent = xml;
+}
+
+/* =========================================================
+   ZIP DOWNLOAD
+========================================================= */
+async function downloadZip(){
+  const problems = validateAll();
+  if(problems.length){
+    if(!confirm('未解決の警告があります。それでもダウンロードしますか？\n\n' + problems.join('\n'))) return;
+  }
+  const { xml, sortedPaths } = generateXML();
+  const fById = Object.fromEntries(state.files.map(f=>[filePath(f), f]));
+  const baseName = sanitizeToken(document.getElementById('out-base-name').value) || 'translation';
+
+  const zip = new JSZip();
+  const outFileName = state.propertiesFile.content && state.propertiesFile.content.trim()
+    ? baseName + '.modinfo'
+    : baseName + '-fragment.xml';
+  zip.file(outFileName, xml);
+
+  sortedPaths.forEach(p=>{
+    const f = fById[p];
+    if(f) zip.file(p, f.content);
+  });
+
+  try{
+    const blob = await zip.generateAsync({type:'blob'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = baseName + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('ZIPをダウンロードしました');
+  }catch(e){
+    console.error(e);
+    showToast('ZIP生成中にエラーが発生しました');
+  }
+}
+
+/* =========================================================
+   GITHUB SYNC
+   Project metadata (props/mods/requirements/actions/file index)
+   is stored as one JSON file in the repo. Each translation file
+   is stored as its own real file at modId/subPath/fileName, so
+   it's also directly readable/editable on GitHub by anyone.
+========================================================= */
+function ghConfig(){
+  return {
+    owner: document.getElementById('gh-owner').value.trim(),
+    repo: document.getElementById('gh-repo').value.trim(),
+    branch: document.getElementById('gh-branch').value.trim() || 'main',
+    path: document.getElementById('gh-path').value.trim() || 'civ6-modinfo-project.json',
+    token: document.getElementById('gh-token').value.trim()
+  };
+}
+function ghLog(msg, isError){
+  const box = document.getElementById('gh-log');
+  const time = new Date().toLocaleTimeString();
+  const line = `[${time}] ${msg}`;
+  if(box.textContent==='まだ操作はありません。') box.textContent='';
+  box.textContent += (box.textContent?'\n':'') + line;
+  box.scrollTop = box.scrollHeight;
+  if(isError) console.error(msg);
+}
+function ghSetStatus(msg){ document.getElementById('gh-status-line').textContent = msg; }
+
+function ghHeaders(cfg){
+  return {
+    'Authorization': 'Bearer ' + cfg.token,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+}
+function ghApiBase(cfg){ return `https://api.github.com/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`; }
+function ghEncodePath(path){ return path.split('/').map(encodeURIComponent).join('/'); }
+
+function utf8ToBase64(str){ return btoa(unescape(encodeURIComponent(str))); }
+function base64ToUtf8(b64){ return decodeURIComponent(escape(atob(String(b64).replace(/\n/g,'')))); }
+
+function ghValidateConfig(cfg){
+  if(!cfg.owner || !cfg.repo) throw new Error('owner と repo を入力してください。');
+  if(!cfg.token) throw new Error('Personal Access Token を入力してください。');
+}
+
+async function ghGetFile(cfg, path, branch){
+  const ref = branch || cfg.branch;
+  const res = await fetch(`${ghApiBase(cfg)}/contents/${ghEncodePath(path)}?ref=${encodeURIComponent(ref)}`, { headers: ghHeaders(cfg) });
+  if(res.status===404) return null;
+  if(!res.ok) throw new Error(`GET ${path} 失敗: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  if(Array.isArray(data)) throw new Error(`${path} はディレクトリです。`);
+  return { content: base64ToUtf8(data.content), sha: data.sha };
+}
+async function ghPutFile(cfg, path, content, message, branch){
+  const ref = branch || cfg.branch;
+  // fetch latest sha right before writing, so concurrent edits by teammates don't get clobbered silently
+  const existing = await ghGetFile(cfg, path, ref).catch(()=>null);
+  const body = { message: message || `Update ${path}`, content: utf8ToBase64(content), branch: ref };
+  if(existing) body.sha = existing.sha;
+  const res = await fetch(`${ghApiBase(cfg)}/contents/${ghEncodePath(path)}`, {
+    method: 'PUT', headers: { ...ghHeaders(cfg), 'Content-Type':'application/json' }, body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error(`PUT ${path} 失敗: ${res.status} ${await res.text()}`);
+  return (await res.json()).content.sha;
+}
+async function ghDeleteFile(cfg, path, message, branch){
+  const ref = branch || cfg.branch;
+  const existing = await ghGetFile(cfg, path, ref).catch(()=>null);
+  if(!existing) return; // already gone
+  const res = await fetch(`${ghApiBase(cfg)}/contents/${ghEncodePath(path)}`, {
+    method: 'DELETE', headers: { ...ghHeaders(cfg), 'Content-Type':'application/json' },
+    body: JSON.stringify({ message: message || `Delete ${path}`, sha: existing.sha, branch: ref })
+  });
+  if(!res.ok) throw new Error(`DELETE ${path} 失敗: ${res.status} ${await res.text()}`);
+}
+async function ghGetTree(cfg, branch){
+  const ref = branch || cfg.branch;
+  const res = await fetch(`${ghApiBase(cfg)}/git/trees/${encodeURIComponent(ref)}?recursive=1`, { headers: ghHeaders(cfg) });
+  if(!res.ok) throw new Error(`リポジトリのツリー取得に失敗: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  return (data.tree||[]).filter(t=> t.type==='blob');
+}
+async function ghGetBranchSha(cfg, branch){
+  const res = await fetch(`${ghApiBase(cfg)}/git/ref/${encodeURIComponent('heads/'+branch)}`, { headers: ghHeaders(cfg) });
+  if(res.status===404) return null;
+  if(!res.ok) throw new Error(`ブランチ ${branch} の取得に失敗: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  return data.object.sha;
+}
+async function ghCreateBranch(cfg, newBranch, fromBranch){
+  const baseSha = await ghGetBranchSha(cfg, fromBranch);
+  if(!baseSha) throw new Error(`ベースブランチ ${fromBranch} が見つかりません。`);
+  const existingSha = await ghGetBranchSha(cfg, newBranch);
+  if(existingSha) return { existed: true, sha: existingSha };
+  const res = await fetch(`${ghApiBase(cfg)}/git/refs`, {
+    method: 'POST', headers: { ...ghHeaders(cfg), 'Content-Type':'application/json' },
+    body: JSON.stringify({ ref: `refs/heads/${newBranch}`, sha: baseSha })
+  });
+  if(!res.ok) throw new Error(`ブランチ作成に失敗: ${res.status} ${await res.text()}`);
+  return { existed: false, sha: baseSha };
+}
+async function ghCreatePR(cfg, head, base, title, body){
+  const res = await fetch(`${ghApiBase(cfg)}/pulls`, {
+    method: 'POST', headers: { ...ghHeaders(cfg), 'Content-Type':'application/json' },
+    body: JSON.stringify({ title, head, base, body: body||'' })
+  });
+  const data = await res.json();
+  if(!res.ok){
+    // if a PR for this branch already exists, GitHub returns 422 — try to find and reuse it
+    if(res.status===422){
+      const list = await fetch(`${ghApiBase(cfg)}/pulls?head=${encodeURIComponent(cfg.owner+':'+head)}&base=${encodeURIComponent(base)}&state=open`, { headers: ghHeaders(cfg) });
+      if(list.ok){
+        const arr = await list.json();
+        if(arr.length) return arr[0];
+      }
+    }
+    throw new Error(`PR作成に失敗: ${res.status} ${JSON.stringify(data)}`);
+  }
+  return data;
+}
+function suggestBranchName(){
+  const d = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const stamp = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+  return `translate-update-${stamp}`;
+}
+
+function serializeProject(){
+  return JSON.stringify({
+    savedAt: new Date().toISOString(),
+    rootMeta: state.rootMeta,
+    mods: state.mods.map(m=>({id:m.id, name:m.name, url:m.url, displayName:m.displayName})),
+    requirements: state.requirements.map(r=>({id:r.id, xml:r.xml})),
+    actions: state.actions.map(a=>({id:a.id, mod:a.mod, submods:a.submods, requirements:a.requirements, loadOrder:a.loadOrder, isFrontEnd:a.isFrontEnd, files: a.files.map(fk=>{
+      const f = state.files.find(x=>x._key===fk);
+      return f ? filePath(f) : null;
+    }).filter(Boolean) })),
+    files: state.files.map(f=>({ modId:f.modId, subPath:f.subPath, fileName:f.fileName }))
+  }, null, 2);
+}
+
+async function loadFromGithub(){
+  let cfg;
+  try{ cfg = ghConfig(); ghValidateConfig(cfg); }catch(e){ showToast(e.message); return; }
+  if(state.mods.length || state.actions.length){
+    if(!confirm('現在ブラウザ上にある未保存の内容は上書きされます。GitHubから読み込みますか？')) return;
+  }
+  ghSetStatus('読み込み中...');
+  ghLog(`プロジェクトファイル ${cfg.path} を取得中...`);
+  try{
+    const proj = await ghGetFile(cfg, cfg.path);
+    if(!proj){
+      ghLog(`リポジトリに ${cfg.path} が見つかりません。新規プロジェクトとして開始します。`);
+      ghSetStatus('リポジトリに既存プロジェクトなし（新規）');
+      return;
+    }
+    const data = JSON.parse(proj.content);
+
+    state.rootMeta = data.rootMeta || state.rootMeta;
+    document.getElementById('out-mod-id').value = state.rootMeta.id||'';
+    document.getElementById('out-mod-version').value = state.rootMeta.version||'1';
+
+    state.mods = (data.mods||[]).map(m=>({ ...m, _key: uid('mod') }));
+    state.requirements = (data.requirements||[]).map(r=>({ ...r, _key: uid('rk') }));
+
+    // fetch each referenced file's actual content from the repo
+    const fileDefs = data.files || [];
+    ghLog(`${fileDefs.length}件のファイルを取得中...`);
+    state.files = [];
+    let ok=0, fail=0;
+    for(const fd of fileDefs){
+      const p = [fd.modId, fd.subPath, fd.fileName].filter(Boolean).join('/');
+      try{
+        const got = await ghGetFile(cfg, p);
+        if(got){
+          state.files.push({ _key: uid('file'), fileName: fd.fileName, modId: fd.modId, subPath: fd.subPath||'', content: got.content, source:'github', dirty:false, originalPath: p });
+          ok++;
+        } else {
+          ghLog(`⚠ ${p} が見つかりませんでした（スキップ）`, true); fail++;
+        }
+      }catch(e){ ghLog(`⚠ ${p} の取得に失敗: ${e.message}`, true); fail++; }
+    }
+    ghLog(`ファイル取得完了: 成功 ${ok} / 失敗 ${fail}`);
+
+    const filesByPath = Object.fromEntries(state.files.map(f=>[f.originalPath, f._key]));
+    state.actions = (data.actions||[]).map(a=>({
+      id: a.id, mod: a.mod, submods: a.submods||[], requirements: a.requirements||[],
+      loadOrder: a.loadOrder, isFrontEnd: a.isFrontEnd,
+      files: (a.files||[]).map(p=>filesByPath[p]).filter(Boolean)
+    }));
+
+    pendingGithubDeletes = [];
+    resetActionForm();
+    renderMods(); renderRequirements(); renderFiles(); renderActionForm(); renderActionsList();
+    ghSetStatus(`読み込み完了（保存日時: ${data.savedAt||'不明'}）`);
+    ghLog('読み込み完了。');
+    showToast('GitHubからプロジェクトを読み込みました');
+  }catch(e){
+    ghSetStatus('読み込みエラー');
+    ghLog('❌ ' + e.message, true);
+    showToast('読み込みに失敗しました: ' + e.message);
+  }
+}
+
+async function writeAllChangesToBranch(cfg, branch){
+  // 1) delete files removed locally that were previously synced
+  for(const p of pendingGithubDeletes){
+    try{ await ghDeleteFile(cfg, p, 'Remove unused translation file', branch); ghLog(`削除: ${p}`); }
+    catch(e){ ghLog(`⚠ ${p} の削除に失敗: ${e.message}`, true); }
+  }
+  pendingGithubDeletes = [];
+
+  // 2) write every file that has content (covers new local files and edited github files)
+  let written=0;
+  for(const f of state.files){
+    if(!f.modId){ ghLog(`⚠ ${f.fileName} は格納先MODが未設定のためスキップしました`, true); continue; }
+    const newPath = filePath(f);
+    if(f.source==='github' && !f.dirty && f.originalPath===newPath){
+      continue; // nothing changed, skip to save API calls
+    }
+    try{
+      if(f.source==='github' && f.originalPath && f.originalPath!==newPath){
+        await ghDeleteFile(cfg, f.originalPath, `Move ${f.originalPath} -> ${newPath}`, branch);
+        ghLog(`移動: ${f.originalPath} → ${newPath}`);
+      }
+      await ghPutFile(cfg, newPath, f.content, `Update translation file ${newPath}`, branch);
+      f.source='github'; f.dirty=false; f.originalPath=newPath;
+      written++;
+      ghLog(`保存: ${newPath}`);
+    }catch(e){ ghLog(`⚠ ${newPath} の保存に失敗: ${e.message}`, true); }
+  }
+
+  // 3) write project.json last, once file paths are finalized
+  const projJson = serializeProject();
+  await ghPutFile(cfg, cfg.path, projJson, 'Update Civ6 modinfo project', branch);
+  ghLog(`保存: ${cfg.path}`);
+  renderFiles();
+  return written;
+}
+
+async function saveToGithub(){
+  let cfg;
+  try{ cfg = ghConfig(); ghValidateConfig(cfg); }catch(e){ showToast(e.message); return; }
+  const problems = validateAll();
+  if(problems.length){
+    if(!confirm('未解決の警告があります。それでも保存しますか？\n\n' + problems.join('\n'))) return;
+  }
+  if(!confirm(`「${cfg.branch}」ブランチに直接保存します（レビューなしで反映されます）。よろしいですか？\n\n通常は「変更を提案する（PRを作成）」の利用をおすすめします。`)) return;
+  ghSetStatus('保存中...');
+  ghLog(`${cfg.branch} へ直接保存を開始します。`);
+  try{
+    const written = await writeAllChangesToBranch(cfg, cfg.branch);
+    ghSetStatus(`保存完了（${written}件のファイルを更新）`);
+    ghLog('保存完了。');
+    showToast('GitHubに保存しました');
+  }catch(e){
+    ghSetStatus('保存エラー');
+    ghLog('❌ ' + e.message, true);
+    showToast('保存に失敗しました: ' + e.message);
+  }
+}
+
+async function proposeChangesAsPR(){
+  let cfg;
+  try{ cfg = ghConfig(); ghValidateConfig(cfg); }catch(e){ showToast(e.message); return; }
+  const problems = validateAll();
+  if(problems.length){
+    if(!confirm('未解決の警告があります。それでも提案しますか？\n\n' + problems.join('\n'))) return;
+  }
+  let branchName = document.getElementById('gh-pr-branch').value.trim();
+  if(!branchName){ branchName = suggestBranchName(); document.getElementById('gh-pr-branch').value = branchName; }
+  const title = document.getElementById('gh-pr-title').value.trim() || '翻訳ファイルを更新';
+  const body = document.getElementById('gh-pr-body').value;
+
+  ghSetStatus('PRを作成中...');
+  ghLog(`ブランチ ${branchName} を ${cfg.branch} から作成します。`);
+  try{
+    const br = await ghCreateBranch(cfg, branchName, cfg.branch);
+    ghLog(br.existed ? `既存のブランチ ${branchName} を再利用します。` : `ブランチ ${branchName} を作成しました。`);
+
+    const written = await writeAllChangesToBranch(cfg, branchName);
+
+    ghLog('プルリクエストを作成中...');
+    const pr = await ghCreatePR(cfg, branchName, cfg.branch, title, body);
+    ghSetStatus(`提案完了（${written}件のファイルを更新） — PR #${pr.number}`);
+    ghLog(`✅ PRを作成しました: ${pr.html_url}`);
+    const linkBox = document.getElementById('gh-pr-link');
+    linkBox.innerHTML = `<a href="${escapeAttr(pr.html_url)}" target="_blank" rel="noopener">${escapeXml(pr.html_url)}</a> を開いてレビューを依頼してください。`;
+    showToast('プルリクエストを作成しました');
+  }catch(e){
+    ghSetStatus('提案エラー');
+    ghLog('❌ ' + e.message, true);
+    showToast('PR作成に失敗しました: ' + e.message);
+  }
+}
+
+async function importFilesFromRepo(){
+  let cfg;
+  try{ cfg = ghConfig(); ghValidateConfig(cfg); }catch(e){ showToast(e.message); return; }
+  const listBox = document.getElementById('gh-import-list');
+  listBox.innerHTML = '<p class="hint">リポジトリのファイル一覧を取得中...</p>';
+  try{
+    const tree = await ghGetTree(cfg);
+    const existingPaths = new Set(state.files.map(f=>f.originalPath).filter(Boolean));
+    const candidates = tree.filter(t=>{
+      const ext = t.path.split('.').pop().toLowerCase();
+      return (ext==='xml' || ext==='sql') && t.path!==document.getElementById('gh-path').value.trim() && !existingPaths.has(t.path);
+    });
+    if(candidates.length===0){
+      listBox.innerHTML = '<p class="hint">追加で取り込めるファイルはありませんでした（既に取り込み済み、または該当ファイルなし）。</p>';
+      return;
+    }
+    listBox.innerHTML = `<table class="datatable"><thead><tr><th>パス</th><th style="width:120px;"></th></tr></thead><tbody>` +
+      candidates.map(c=>`<tr><td>${escapeXml(c.path)}</td><td><button class="btn small primary" onclick="importOneFile('${jsStrArg(c.path)}')">取り込む</button></td></tr>`).join('') +
+      `</tbody></table>`;
+  }catch(e){
+    listBox.innerHTML = `<p class="hint" style="color:#e2786c;">取得エラー: ${escapeXml(e.message)}</p>`;
+  }
+}
+async function importOneFile(path){
+  let cfg;
+  try{ cfg = ghConfig(); ghValidateConfig(cfg); }catch(e){ showToast(e.message); return; }
+  try{
+    const got = await ghGetFile(cfg, path);
+    if(!got){ showToast('取得できませんでした: '+path); return; }
+    const parts = path.split('/');
+    const fileName = parts.pop();
+    // if this path already sits under a known mod id, pre-fill it; otherwise leave for manual assignment
+    const guessedModId = state.mods.some(m=>m.id===parts[0]) ? parts[0] : '';
+    const subPath = guessedModId ? parts.slice(1).join('/') : parts.join('/');
+    state.files.push({ _key: uid('file'), fileName, modId: guessedModId, subPath, content: got.content, source:'github', dirty:false, originalPath: path });
+    renderFiles();
+    renderActionForm();
+    showToast(`${fileName} を取り込みました`);
+    importFilesFromRepo();
+  }catch(e){
+    showToast('取り込みに失敗しました: ' + e.message);
+  }
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+function init(){
+  renderMods();
+  renderRequirements();
+  renderFiles();
+  renderActionForm();
+  renderActionsList();
+  renderPropertiesStatus();
+  document.getElementById('gh-pr-branch').value = suggestBranchName();
+  const branchInput = document.getElementById('gh-branch');
+  const syncBranchTag = ()=>{ document.getElementById('gh-base-branch-tag').textContent = branchInput.value.trim() || 'main'; };
+  branchInput.addEventListener('input', syncBranchTag);
+  syncBranchTag();
+}
+init();
+</script>
+</body>
+</html>
