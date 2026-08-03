@@ -28,6 +28,11 @@
     </Criteria>
   </ActionCriteria>
   <FrontEndActions>
+    <UpdateText id="Alblo_Wonder_CN_Tower_UpdateText_Config">
+      <Criteria>Alblo_Wonder_CN_Tower_Criteria</Criteria>
+      <Properties><LoadOrder>0</LoadOrder></Properties>
+      <File>Text/Alblo_Wonder_CN_Tower/COREX_Text_Won.xml</File>
+    </UpdateText>
   </FrontEndActions>
   <InGameActions>
     <UpdateText id="Alblo_Wonder_CN_Tower_UpdateText">
