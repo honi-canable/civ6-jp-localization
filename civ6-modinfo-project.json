@@ -1,39 +1,7 @@
 {
-  "savedAt": "2026-08-02T15:27:36.841Z",
-  "rootMeta": {
-    "id": "",
-    "version": "1"
-  },
-  "mods": [
-    {
-      "key": "mod_497194ca",
-      "id": "2e6d1093-6689-4dd5-a47a-9539bc3f8a29",
-      "name": "TOMATEKH_HR",
-      "url": "",
-      "displayName": "Tomatekh's Historical Religions"
-    }
-  ],
+  "savedAt": "2026-08-03T13:36:11.085Z",
+  "mods": [],
   "requirements": [],
-  "actions": [
-    {
-      "key": "act_75e64c40",
-      "id": "TOMATEKH_HR_TEXT_2",
-      "modKey": "mod_497194ca",
-      "submods": [],
-      "requirements": [],
-      "loadOrder": 0,
-      "isFrontEnd": false,
-      "files": [
-        "file_d250d1c5"
-      ]
-    }
-  ],
-  "files": [
-    {
-      "key": "file_d250d1c5",
-      "modKey": "mod_497194ca",
-      "subPath": "",
-      "fileName": "HR_Religions_Text.xml"
-    }
-  ]
+  "actions": [],
+  "files": []
 }
