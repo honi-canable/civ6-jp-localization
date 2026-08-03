@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mod id="e6e46ff9-4da8-4512-9959-c35ea5ab4d87" version="1" xmlns="ModInfo">
+  <Properties>
+    <Name>LOC_CIV6_JP_LOCALIZATION_NAME</Name>
+    <Description>LOC_CIV6_JP_LOCALIZATION_DESC</Description>
+    <Teaser>LOC_CIV6_JP_LOCALIZATION_TEASER</Teaser>
+    <Authors></Authors>
+    <AffectsSavedGames>0</AffectsSavedGames>
+    <CompatibleVersions>1.2,2.0</CompatibleVersions>
+  </Properties>
+  <LocalizedText>
+    <Text id="LOC_CIV6_JP_LOCALIZATION_NAME">
+      <ja_JP>Civ6日本語化MOD</ja_JP>
+      <en_US>Civ 6 JP Localization</en_US>
+    </Text>
+    <Text id="LOC_CIV6_JP_LOCALIZATION_DESC">
+      <ja_JP>さまざまなMODの日本語化を行います。</ja_JP>
+      <en_US>Japanese translation of Various MODs.</en_US>
+    </Text>
+    <Text id="LOC_CIV6_JP_LOCALIZATION_TEASER">
+      <ja_JP>さまざまなMODの日本語化を行います。</ja_JP>
+      <en_US>Japanese translation of Various MODs.</en_US>
+    </Text>
+  </LocalizedText>
+  <ActionCriteria>
+  </ActionCriteria>
+  <FrontEndActions>
+  </FrontEndActions>
+  <InGameActions>
+  </InGameActions>
+  <Files>
+  </Files>
+</Mod>
