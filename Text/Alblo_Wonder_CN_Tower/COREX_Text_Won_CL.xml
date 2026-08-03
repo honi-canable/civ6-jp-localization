@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GameData>
+	<LocalizedText>
+
+		<!-- WONDERS -->
+
+			<Replace Tag="LOC_CL_BUILDING_CN_TOWER_DESCRIPTION" Language="en_US">
+				<Text>Cities within 6 tiles gain +100% [ICON_Production] Production and +3 [ICON_Amenities] Amenities for Modern Era Boroughs. +3 [ICON_Citizen] Population in cities with any Borough districts.[NEWLINE][NEWLINE]Must be built adjacent to a Modern Era Borough.</Text>
+			</Replace>
+
+	</LocalizedText>
+</GameData>
+
