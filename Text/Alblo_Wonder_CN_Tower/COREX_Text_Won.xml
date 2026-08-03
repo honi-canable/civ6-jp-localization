@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GameData>
+	<LocalizedText>
+
+		<!-- WONDERS -->
+
+		<Replace Tag="LOC_CL_BUILDING_CN_TOWER_NAME" Language="en_US">
+			<Text>CN Tower</Text>
+		</Replace>
+
+			<Replace Tag="LOC_CL_BUILDING_CN_TOWER_DESCRIPTION" Language="en_US">
+				<Text>Grants a Broadcast Center building in every city with a Museum. Buildings in the Entertainment Complex district gain +4 Range and +2 [ICON_CULTURE] Culture for regional effects in this city. Must be built adjacent to an Entertainment Complex district owned by this city.</Text>
+			</Replace>
+
+				<Replace Tag="LOC_CL_BUILDING_CN_TOWER_QUOTE" Language="en_US">
+					<Text>"Nothing travels faster than light with the possible exception of bad news, which obeys its own special rules."[NEWLINE]–Douglas Adams</Text>
+				</Replace>	
+
+	</LocalizedText>
+</GameData>
+
