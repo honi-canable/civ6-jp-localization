@@ -1,7 +1,42 @@
 {
-  "savedAt": "2026-08-03T13:36:11.085Z",
-  "mods": [],
+  "savedAt": "2026-08-03T14:03:01.342Z",
+  "mods": [
+    {
+      "key": "mod_97c80432",
+      "id": "ffa02d2f-e5d4-43fd-bb97-0a4868c7b3a7",
+      "name": "Alblo_Wonder_CN_Tower",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2442822973",
+      "displayName": "CIVILIZATION VI: CN Tower",
+      "memo": ""
+    }
+  ],
   "requirements": [],
-  "actions": [],
-  "files": []
+  "actions": [
+    {
+      "key": "act_a62ac3f3",
+      "id": "UpdateText",
+      "modKey": "mod_97c80432",
+      "submods": [],
+      "requirements": [],
+      "loadOrder": 0,
+      "isFrontEnd": false,
+      "files": [
+        "file_deb17998"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "key": "file_deb17998",
+      "modKey": "mod_97c80432",
+      "subPath": "",
+      "fileName": "COREX_Text_Won.xml"
+    },
+    {
+      "key": "file_afa239cb",
+      "modKey": "mod_97c80432",
+      "subPath": "",
+      "fileName": "COREX_Text_Won_CL.xml"
+    }
+  ]
 }
