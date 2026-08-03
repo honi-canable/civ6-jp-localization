@@ -1,5 +1,5 @@
 {
-  "savedAt": "2026-08-03T14:03:01.342Z",
+  "savedAt": "2026-08-03T23:22:54.353Z",
   "mods": [
     {
       "key": "mod_97c80432",
@@ -7,7 +7,8 @@
       "name": "Alblo_Wonder_CN_Tower",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2442822973",
       "displayName": "CIVILIZATION VI: CN Tower",
-      "memo": ""
+      "memo": "",
+      "lastUpdated": "2026-08-03T23:22:42.102Z"
     }
   ],
   "requirements": [],
@@ -20,6 +21,18 @@
       "requirements": [],
       "loadOrder": 0,
       "isFrontEnd": false,
+      "files": [
+        "file_deb17998"
+      ]
+    },
+    {
+      "key": "act_6ebc472c",
+      "id": "UpdateText_Config",
+      "modKey": "mod_97c80432",
+      "submods": [],
+      "requirements": [],
+      "loadOrder": 0,
+      "isFrontEnd": true,
       "files": [
         "file_deb17998"
       ]
