@@ -1,12 +1,13 @@
 {
-  "savedAt": "2026-08-03T23:22:54.353Z",
+  "savedAt": "2026-08-04T17:57:28.899Z",
   "mods": [
     {
       "key": "mod_97c80432",
       "id": "ffa02d2f-e5d4-43fd-bb97-0a4868c7b3a7",
       "name": "Alblo_Wonder_CN_Tower",
       "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2442822973",
-      "displayName": "CIVILIZATION VI: CN Tower",
+      "nameJa": "",
+      "nameBase": "CIVILIZATION VI: CN Tower",
       "memo": "",
       "lastUpdated": "2026-08-03T23:22:42.102Z"
     }
