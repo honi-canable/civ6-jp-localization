@@ -1,0 +1,78 @@
+name: Auto-merge translation PRs
+
+# civ6-jp-localization リポジトリの main への Pull Request を対象に、
+# 変更ファイルが「翻訳ファイル・生成物・プロジェクトデータ」の範囲内に
+# 収まっているかだけを機械的にチェックし、範囲内なら自動承認・自動マージする。
+#
+# 重要: pull_request_target を使うのは、フォークから送られたPRに対しても
+# ワークフロー自身が base リポジトリ側の権限（GITHUB_TOKEN）で動く必要が
+# あるため。PR側のコードは一切チェックアウト・実行しない（ファイル一覧の
+# 取得と承認/マージAPI呼び出しのみ）ので、悪意あるPRの中身に影響されない。
+#
+# このファイルは main ブランチに存在するものが使われる（PR側で書き換えても
+# 無視される）ため、フォーク元がこのワークフロー自体を改ざんすることはできない。
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check changed files, approve & merge if in-range
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100
+            });
+
+            // 自動マージを許可するファイルの範囲。
+            // 必要に応じてここのパターンを調整してください。
+            const allowed = [
+              /^Text\//,                          // 翻訳ファイル一式
+              /^Civ6_JP_Localization\.modinfo$/,   // 生成されるmodinfo（ツールのOUTPUT_FILE_NAMEと一致させること）
+              /^civ6-modinfo-project\.json$/,      // プロジェクトデータ
+              /^README\.md$/                       // MODLIST:START/END の自動更新分
+            ];
+
+            const disallowed = files
+              .map(f => f.filename)
+              .filter(name => !allowed.some(re => re.test(name)));
+
+            if (disallowed.length === 0) {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                event: 'APPROVE',
+                body: '対象ファイルが許可された範囲内のため、自動承認・自動マージします。'
+              });
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                merge_method: 'squash'
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body:
+                  '⚠️ このPRは自動マージ対象外のファイルを含んでいます:\n' +
+                  disallowed.map(f => '- `' + f + '`').join('\n') +
+                  '\n\n手動でのレビューをお願いします。'
+              });
+            }
