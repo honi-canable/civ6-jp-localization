@@ -17,7 +17,6 @@
 		</UpdateText>
 		<ImportFiles id="SSUIA_AddUserInterfaces">
 			<Properties>
-        		<Context>InGame</Context>
 				<LoadOrder>30</LoadOrder>
 			</Properties>
 			<File>Suk_YieldTT.lua</File>

@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Mod id="d8920739-5ce8-439a-a41c-3d405bdf291e" version="1">
+	<Properties>
+		<Name>[JP] Civ6日本語化MOD</Name>
+		<Description>Description</Description>
+		<Teaser>Teaser</Teaser>
+		<AffectsSavedGames>0</AffectsSavedGames>
+		<CompatibleVersions>1.2,2.0</CompatibleVersions>
+		<Authors>Canable</Authors>
+	</Properties>
+	<ActionCriteria>
+		<Criteria id="SukritactSimpleUIAdjustments_InGameCriteria">
+			<ModInUse>805cc499-c534-4e0a-bdce-32fb3c53ba38</ModInUse>
+		</Criteria>
+	</ActionCriteria>
+	<FrontEndActions></FrontEndActions>
+	<InGameActions>
+		<UpdateText id="SSUIA_UpdateText">
+			<Criteria>SukritactSimpleUIAdjustments_InGameCriteria</Criteria>
+			<Properties>
+				<LoadOrder>20000</LoadOrder>
+			</Properties>
+			<File>Texts/SukritactSimpleUIAdjustments/Localisation.sql</File>
+		</UpdateText>
+		<ImportFiles id="SSUIA_AddUserInterfaces">
+			<Criteria>SukritactSimpleUIAdjustments_InGameCriteria</Criteria>
+			<Properties>
+				<LoadOrder>30</LoadOrder>
+			</Properties>
+			<File>Texts/SukritactSimpleUIAdjustments/Suk_YieldTT.lua</File>
+		</ImportFiles>
+	</InGameActions>
+	<Files>
+		<File>Texts/SukritactSimpleUIAdjustments/Localisation.sql</File>
+		<File>Texts/SukritactSimpleUIAdjustments/Suk_YieldTT.lua</File>
+	</Files>
+</Mod>
