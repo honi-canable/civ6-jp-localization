@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mod id="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+	<Properties>
+		<Authors>username</Authors>
+	</Properties>
+	
+	<ActionCriteria>	
+		<Criteria id="Hogehoge_Criteria">
+			<ModInUse>XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX</ModInUse>
+		</Criteria>
+	</ActionCriteria>
+
+	<FrontEndActions>
+		<UpdateText id="TestMod_UpdateText">
+			<Properties><LoadOrder>10000</LoadOrder></Properties>
+			<File>Text.sql</File>
+		</UpdateText>
+	</FrontEndActions>
+
+	<InGameActions>
+		<UpdateText id="TestMod_UpdateText">
+			<Properties><LoadOrder>10000</LoadOrder></Properties>
+			<File>Text.sql</File>
+		</UpdateText>
+		<UpdateText id="TestMod_Hogehoge_UpdateText">
+			<Properties><LoadOrder>10000</LoadOrder></Properties>
+      		<Criteria>Hogehoge_Criteria</Criteria>
+			<File>Hogehoge_Text.xml</File>
+		</UpdateText>
+	</InGameActions>
+</Mod>
