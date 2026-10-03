@@ -16,7 +16,10 @@
 			<File>Localisation.sql</File>
 		</UpdateText>
 		<ImportFiles id="SSUIA_AddUserInterfaces">
-			<Properties><LoadOrder>30</LoadOrder></Properties>
+			<Properties>
+        		<Context>InGame</Context>
+				<LoadOrder>30</LoadOrder>
+			</Properties>
 			<File>Suk_YieldTT.lua</File>
 		</ImportFiles>
 	</InGameActions>
