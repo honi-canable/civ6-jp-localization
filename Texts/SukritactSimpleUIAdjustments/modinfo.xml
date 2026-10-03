@@ -12,7 +12,7 @@
 
 	<InGameActions>
 		<UpdateText id="SSUIA_UpdateText">
-			<Properties><LoadOrder>10000</LoadOrder></Properties>
+			<Properties><LoadOrder>20000</LoadOrder></Properties>
 			<File>Localisation.sql</File>
 		</UpdateText>
 		<ImportFiles id="SSUIA_AddUserInterfaces">
