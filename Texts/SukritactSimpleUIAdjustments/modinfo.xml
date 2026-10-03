@@ -1,1 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mod id="805cc499-c534-4e0a-bdce-32fb3c53ba38">
+	<Properties>
+		<Authors>Canable</Authors>
+	</Properties>
+	
+	<ActionCriteria>	
+	</ActionCriteria>
 
+	<FrontEndActions>
+	</FrontEndActions>
+
+	<InGameActions>
+		<UpdateText id="SSUIA_UpdateText">
+			<Properties><LoadOrder>10000</LoadOrder></Properties>
+			<File>Localisation.sql</File>
+		</UpdateText>
+		<ImportFiles id="SSUIA_AddUserInterfaces">
+			<Properties><LoadOrder>30</LoadOrder></Properties>
+			<File>Suk_YieldTT.lua</File>
+		</ImportFiles>
+	</InGameActions>
+</Mod>
