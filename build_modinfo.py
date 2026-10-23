@@ -5,22 +5,16 @@ from pathlib import Path, PurePosixPath
 import re
 import xml.etree.ElementTree as ET
 
-# ── 全体設定 ──────────────────────────────────────────────
-
 ROOT = Path(__file__).resolve().parent
 TEXTS_DIR = ROOT / "Texts"
 PROPERTIES_FILE = ROOT / "Properties.xml"
 OUTPUT_FILE = ROOT / "Civ6_JP_Localization.modinfo"
 
-# この日本語化MOD自身のID。以後は変えない。
 MOD_ID = "d8920739-5ce8-439a-a41c-3d405bdf291e"
 MOD_VERSION = "1"
+MOD_AUTHOR = "Civ6 JP modding community"
 
-# 親MODフォルダ名に使える文字。
 SAFE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-
-
-# ── 補助関数 ──────────────────────────────────────────────
 
 
 def parse_xml(path: Path) -> ET.ElementTree:
@@ -32,7 +26,7 @@ def parse_xml(path: Path) -> ET.ElementTree:
 
 def add_unique_id(used_ids: set[str], value: str, source: Path) -> None:
     if value in used_ids:
-        raise RuntimeError(f"Criteria ID が重複しました: {value}\n" f"発生元: {source}")
+        raise RuntimeError(f"Criteria ID が重複しました: {value}\n発生元: {source}")
     used_ids.add(value)
 
 
@@ -41,7 +35,6 @@ def rewrite_file_path(
     mod_folder: Path,
     used_files: set[str],
 ) -> None:
-    """Action直下の<File>を完成modinfo基準の相対パスに変換する。"""
     if not file_element.text or not file_element.text.strip():
         raise RuntimeError(f"<File> が空です: {mod_folder / 'modinfo.xml'}")
 
@@ -58,27 +51,12 @@ def rewrite_file_path(
 
     if not actual_file.is_file():
         raise RuntimeError(
-            f"<File> で指定されたファイルが見つかりません:\n" f"  {actual_file}"
+            f"<File> で指定されたファイルが見つかりません:\n  {actual_file}"
         )
 
     output_path = actual_file.relative_to(ROOT).as_posix()
     file_element.text = output_path
     used_files.add(output_path)
-
-
-def collect_authors(fragment_root: ET.Element, authors: list[str]) -> None:
-    """各fragmentの<Properties><Authors>を初出順で集約する。"""
-    properties = fragment_root.find("Properties")
-    if properties is None:
-        return
-
-    for element in properties.findall("Authors"):
-        if not element.text:
-            continue
-
-        author = element.text.strip()
-        if author and author not in authors:
-            authors.append(author)
 
 
 def namespace_fragment_criteria(
@@ -88,11 +66,6 @@ def namespace_fragment_criteria(
     used_criteria_ids: set[str],
     source: Path,
 ) -> dict[str, str]:
-    """
-    fragment内の既存Criteriaを
-      OldCriteria -> <FolderName>_OldCriteria
-    の形でユニーク化して、完成modinfoへコピーする。
-    """
     mapping: dict[str, str] = {}
 
     section = fragment_root.find("ActionCriteria")
@@ -124,7 +97,6 @@ def make_parent_criterion(
     used_criteria_ids: set[str],
     source: Path,
 ) -> None:
-    """親MODが有効なときだけActionを実行するCriteriaを作る。"""
     add_unique_id(used_criteria_ids, criterion_id, source)
 
     criterion = ET.SubElement(
@@ -144,10 +116,6 @@ def copy_actions(
     mod_folder: Path,
     used_files: set[str],
 ) -> int:
-    """
-    FrontEndActions / InGameActions の直下要素を
-    Action種別に関係なくそのままコピーする。
-    """
     if source_section is None:
         return 0
 
@@ -156,8 +124,6 @@ def copy_actions(
     for original_action in source_section:
         action = deepcopy(original_action)
 
-        # fragment内で定義された既存Criteriaの参照名を書き換える。
-        # 未定義のCriteria参照は外部・共通Criteriaの可能性があるためそのまま残す。
         for criterion_ref in action.findall("Criteria"):
             if not criterion_ref.text:
                 continue
@@ -166,14 +132,11 @@ def copy_actions(
             if old_ref in criteria_mapping:
                 criterion_ref.text = criteria_mapping[old_ref]
 
-        # 親MOD判定Criteriaを追加。
         parent_ref = ET.Element("Criteria")
         parent_ref.text = parent_criterion_id
 
-        # 見やすいよう、Actionの先頭に置く。
         action.insert(0, parent_ref)
 
-        # Action直下の<File>だけを対象にする。
         for file_element in action.findall("File"):
             rewrite_file_path(file_element, mod_folder, used_files)
 
@@ -183,7 +146,27 @@ def copy_actions(
     return count
 
 
-# ── メイン処理 ────────────────────────────────────────────
+def collect_automatic_files(mod_folder: Path) -> list[str]:
+    return sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in mod_folder.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".xml", ".sql"}
+    )
+
+
+def add_automatic_actions(
+    folder_name: str,
+    files: list[str],
+    frontend_section: ET.Element,
+    ingame_section: ET.Element,
+    used_files: set[str],
+) -> None:
+    for section in (frontend_section, ingame_section):
+        action = ET.SubElement(section, "UpdateText", {"id": folder_name})
+        for file_path in files:
+            ET.SubElement(action, "File").text = file_path
+
+    used_files.update(files)
 
 
 def main() -> None:
@@ -201,7 +184,6 @@ def main() -> None:
             "Properties.xml のルート要素は <Properties> にしてください。"
         )
 
-    # 完成modinfoの骨格。
     final_root = ET.Element(
         "Mod",
         {
@@ -211,6 +193,9 @@ def main() -> None:
     )
 
     final_properties = deepcopy(properties_root)
+    for element in final_properties.findall("Authors"):
+        final_properties.remove(element)
+    ET.SubElement(final_properties, "Authors").text = MOD_AUTHOR
     final_root.append(final_properties)
 
     final_action_criteria = ET.SubElement(final_root, "ActionCriteria")
@@ -218,17 +203,25 @@ def main() -> None:
     final_ingame_actions = ET.SubElement(final_root, "InGameActions")
     final_files = ET.SubElement(final_root, "Files")
 
-    authors: list[str] = []
     used_files: set[str] = set()
     used_criteria_ids: set[str] = set()
 
-    fragment_paths = sorted(TEXTS_DIR.glob("*/modinfo.xml"))
+    mod_folders = sorted(path for path in TEXTS_DIR.iterdir() if path.is_dir())
 
-    if not fragment_paths:
-        raise RuntimeError(f"親MOD用 modinfo.xml が見つかりません: {TEXTS_DIR}")
+    if not mod_folders:
+        raise RuntimeError(f"親MODフォルダが見つかりません: {TEXTS_DIR}")
 
-    for fragment_path in fragment_paths:
-        mod_folder = fragment_path.parent
+    processed_count = 0
+
+    for mod_folder in mod_folders:
+        fragment_path = mod_folder / "modinfo.xml"
+
+        automatic_files = None
+        if not fragment_path.is_file():
+            automatic_files = collect_automatic_files(mod_folder)
+            if not automatic_files:
+                continue
+
         folder_name = mod_folder.name
 
         if not SAFE_NAME.fullmatch(folder_name):
@@ -238,6 +231,18 @@ def main() -> None:
                 "使用可能: 英数字と _ ／ 先頭は数字不可"
             )
 
+        if not fragment_path.is_file():
+            add_automatic_actions(
+                folder_name,
+                automatic_files,
+                final_frontend_actions,
+                final_ingame_actions,
+                used_files,
+            )
+            processed_count += 1
+            continue
+
+        processed_count += 1
         fragment_tree = parse_xml(fragment_path)
         fragment_root = fragment_tree.getroot()
 
@@ -248,9 +253,6 @@ def main() -> None:
         if not parent_mod_id:
             raise RuntimeError(f"親MODの id がありません: {fragment_path}")
 
-        collect_authors(fragment_root, authors)
-
-        # fragment内に元から存在するCriteriaをユニーク化。
         criteria_mapping = namespace_fragment_criteria(
             fragment_root,
             folder_name,
@@ -265,7 +267,6 @@ def main() -> None:
         frontend_actions = list(frontend_source) if frontend_source is not None else []
         ingame_actions = list(ingame_source) if ingame_source is not None else []
 
-        # FrontEndActionsが存在するときだけ親Criteriaを生成。
         if frontend_actions:
             frontend_criterion_id = f"{folder_name}_FrontEndCriteria"
 
@@ -287,7 +288,6 @@ def main() -> None:
                 used_files,
             )
 
-        # InGameActionsが存在するときだけ親Criteriaを生成。
         if ingame_actions:
             ingame_criterion_id = f"{folder_name}_InGameCriteria"
 
@@ -309,30 +309,8 @@ def main() -> None:
                 used_files,
             )
 
-    # AuthorsをProperties.xml由来のPropertiesへ追加。
-    # Properties.xml側にAuthorsが書かれていた場合も重複しないようにする。
-    existing_author_elements = final_properties.findall("Authors")
-    existing_authors = [
-        e.text.strip() for e in existing_author_elements if e.text and e.text.strip()
-    ]
-
-    for element in existing_author_elements:
-        final_properties.remove(element)
-
-    merged_authors: list[str] = []
-    for author in existing_authors + authors:
-        if author not in merged_authors:
-            merged_authors.append(author)
-
-    if merged_authors:
-        authors_element = ET.Element("Authors")
-        authors_element.text = ", ".join(merged_authors)
-        final_properties.append(authors_element)
-
-    # 各Actionで実際に使用されているファイルだけを列挙。
     for path in sorted(used_files):
-        element = ET.SubElement(final_files, "File")
-        element.text = path
+        ET.SubElement(final_files, "File").text = path
 
     tree = ET.ElementTree(final_root)
     ET.indent(tree, space="\t")
@@ -345,8 +323,8 @@ def main() -> None:
     )
 
     print(f"生成完了: {OUTPUT_FILE}")
-    print(f"親MOD数: {len(fragment_paths)}")
-    print(f"Authors: {len(merged_authors)}")
+    print(f"親MOD数: {processed_count}")
+    print(f"Authors: {MOD_AUTHOR}")
     print(f"Files: {len(used_files)}")
 
 

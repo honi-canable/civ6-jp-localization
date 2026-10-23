@@ -45,9 +45,11 @@ Texts/
 ```
 
 <a id="experienced3"></a>
-### 3. modinfo.xmlを作成する
+### 3. 必要に応じて modinfo.xml を作成する
 
-親MODごとに `modinfo.xml` を作成し、フォルダ内に配置してください (現状はファイル名 `modinfo.xml` のみ許容)。
+依存関係やロード順などの処理を行う場合、 `modinfo.xml` ファイルを作成して適用させることができます。こうした処理が不要であれば、3の手順は省略できます。不明点があればDiscordでお気軽にお問い合わせください。
+
+`modinfo.xml` の記入例を示します。作成した `modinfo.xml` は、親modのフォルダ内に配置してください。 また、現状はファイル名 `modinfo.xml` 完全一致のみ読み込まれます。 `modinfo.xml` が存在しないmodは、全てのファイルが自動的に適用されます。
 
 **記入例**
 
@@ -55,10 +57,6 @@ Texts/
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 親MODのmodinfoに示されるID -->
 <Mod id="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-	<Properties>
-		<Authors>{あなたの名前}</Authors>
-	</Properties>
-	
     <!-- 親MOD以外に依存関係がある場合に追加 -->
 	<ActionCriteria>
 		<Criteria id="Hogehoge_Criteria">
@@ -99,7 +97,7 @@ Texts/
 
 `build_modinfo.py` を実行してください。
 
-各フォルダ内の `modinfo.xml` をもとに、 `Civ6_JP_Localization.modinfo` が自動生成されます。
+各フォルダ内のファイルおよび `modinfo.xml` をもとに、 `Civ6_JP_Localization.modinfo` が自動生成されます。
 
 ---
 
@@ -210,7 +208,7 @@ Steam以外の環境や、外部からダウンロードしたMODであれば、
 
 <Row> → INSERT INTO
 <Replace> → INSERT OR REPLACE INTO
-<InsertOrIgnore> → INSERT OR IGNORE
+<InsertOrIgnore> → INSERT OR IGNORE INTO
 ```
 
 `Row` 句は、新しいデータを追加するための記述ですが、 `Tag` と `Language` の両方が重複する行が存在する場合はエラーを出します。
