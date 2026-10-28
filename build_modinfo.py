@@ -24,6 +24,20 @@ def parse_xml(path: Path) -> ET.ElementTree:
         raise RuntimeError(f"XMLの解析に失敗しました: {path}\n{exc}") from exc
 
 
+def parse_properties(path: Path) -> list[ET.Element]:
+    content = path.read_text(encoding="utf-8-sig")
+    content = re.sub(r"^\s*<\?xml\s+.*?\?>", "", content, count=1, flags=re.DOTALL)
+    try:
+        elements = list(ET.fromstring(f"<Root>{content}</Root>"))
+    except ET.ParseError as exc:
+        raise RuntimeError(f"XMLの解析に失敗しました: {path}\n{exc}") from exc
+
+    if not elements or elements[0].tag != "Properties":
+        raise RuntimeError("Properties.xml は <Properties> から始めてください。")
+
+    return elements
+
+
 def add_unique_id(used_ids: set[str], value: str, source: Path) -> None:
     if value in used_ids:
         raise RuntimeError(f"Criteria ID が重複しました: {value}\n発生元: {source}")
@@ -34,24 +48,34 @@ def rewrite_file_path(
     file_element: ET.Element,
     mod_folder: Path,
     used_files: set[str],
+    action: ET.Element,
 ) -> None:
-    if not file_element.text or not file_element.text.strip():
-        raise RuntimeError(f"<File> が空です: {mod_folder / 'modinfo.xml'}")
+    source = mod_folder / "modinfo.xml"
+    file_value = file_element.text or ""
+    details = (
+        f"  設定ファイル: {source}\n"
+        f"  Action: {action.tag} id={action.get('id')!r}\n"
+        f"  <File> の値: {file_value!r}"
+    )
 
-    raw = file_element.text.strip().replace("\\", "/")
+    if not file_value.strip():
+        raise RuntimeError(f"<File> が空です:\n{details}")
+
+    raw = file_value.strip().replace("\\", "/")
     relative = PurePosixPath(raw)
 
     if relative.is_absolute() or ".." in relative.parts:
         raise RuntimeError(
-            f"親MODフォルダ外を参照する<File>は使用できません: {raw}\n"
-            f"発生元: {mod_folder / 'modinfo.xml'}"
+            f"親MODフォルダ外を参照する<File>は使用できません:\n{details}"
         )
 
     actual_file = mod_folder.joinpath(*relative.parts)
 
     if not actual_file.is_file():
         raise RuntimeError(
-            f"<File> で指定されたファイルが見つかりません:\n  {actual_file}"
+            f"<File> で指定されたファイルが見つかりません:\n"
+            f"{details}\n"
+            f"  探索先: {str(actual_file)!r}"
         )
 
     output_path = actual_file.relative_to(ROOT).as_posix()
@@ -111,7 +135,7 @@ def make_parent_criterion(
 def copy_actions(
     source_section: ET.Element | None,
     target_section: ET.Element,
-    parent_criterion_id: str,
+    parent_criterion_id: str | None,
     criteria_mapping: dict[str, str],
     mod_folder: Path,
     used_files: set[str],
@@ -124,6 +148,12 @@ def copy_actions(
     for original_action in source_section:
         action = deepcopy(original_action)
 
+        attribute_criterion = action.attrib.pop("criteria", None)
+        if attribute_criterion and attribute_criterion.strip():
+            criterion_ref = ET.Element("Criteria")
+            criterion_ref.text = attribute_criterion.strip()
+            action.insert(0, criterion_ref)
+
         for criterion_ref in action.findall("Criteria"):
             if not criterion_ref.text:
                 continue
@@ -132,13 +162,13 @@ def copy_actions(
             if old_ref in criteria_mapping:
                 criterion_ref.text = criteria_mapping[old_ref]
 
-        parent_ref = ET.Element("Criteria")
-        parent_ref.text = parent_criterion_id
-
-        action.insert(0, parent_ref)
+        if parent_criterion_id is not None:
+            parent_ref = ET.Element("Criteria")
+            parent_ref.text = parent_criterion_id
+            action.insert(0, parent_ref)
 
         for file_element in action.findall("File"):
-            rewrite_file_path(file_element, mod_folder, used_files)
+            rewrite_file_path(file_element, mod_folder, used_files, action)
 
         target_section.append(action)
         count += 1
@@ -176,13 +206,7 @@ def main() -> None:
     if not TEXTS_DIR.is_dir():
         raise RuntimeError(f"Texts フォルダがありません: {TEXTS_DIR}")
 
-    properties_tree = parse_xml(PROPERTIES_FILE)
-    properties_root = properties_tree.getroot()
-
-    if properties_root.tag != "Properties":
-        raise RuntimeError(
-            "Properties.xml のルート要素は <Properties> にしてください。"
-        )
+    properties_elements = parse_properties(PROPERTIES_FILE)
 
     final_root = ET.Element(
         "Mod",
@@ -192,11 +216,13 @@ def main() -> None:
         },
     )
 
-    final_properties = deepcopy(properties_root)
-    for element in final_properties.findall("Authors"):
-        final_properties.remove(element)
-    ET.SubElement(final_properties, "Authors").text = MOD_AUTHOR
-    final_root.append(final_properties)
+    for source_element in properties_elements:
+        element = deepcopy(source_element)
+        if element.tag == "Properties":
+            for author in element.findall("Authors"):
+                element.remove(author)
+            ET.SubElement(element, "Authors").text = MOD_AUTHOR
+        final_root.append(element)
 
     final_action_criteria = ET.SubElement(final_root, "ActionCriteria")
     final_frontend_actions = ET.SubElement(final_root, "FrontEndActions")
@@ -250,8 +276,9 @@ def main() -> None:
             raise RuntimeError(f"{fragment_path} のルート要素は <Mod> にしてください。")
 
         parent_mod_id = fragment_root.get("id")
-        if not parent_mod_id:
+        if parent_mod_id is None:
             raise RuntimeError(f"親MODの id がありません: {fragment_path}")
+        parent_mod_id = parent_mod_id.strip()
 
         criteria_mapping = namespace_fragment_criteria(
             fragment_root,
@@ -268,16 +295,17 @@ def main() -> None:
         ingame_actions = list(ingame_source) if ingame_source is not None else []
 
         if frontend_actions:
-            frontend_criterion_id = f"{folder_name}_FrontEndCriteria"
-
-            make_parent_criterion(
-                frontend_criterion_id,
-                "ModIsEnabled",
-                parent_mod_id,
-                final_action_criteria,
-                used_criteria_ids,
-                fragment_path,
-            )
+            frontend_criterion_id = None
+            if parent_mod_id:
+                frontend_criterion_id = f"{folder_name}_FrontEndCriteria"
+                make_parent_criterion(
+                    frontend_criterion_id,
+                    "ModIsEnabled",
+                    parent_mod_id,
+                    final_action_criteria,
+                    used_criteria_ids,
+                    fragment_path,
+                )
 
             copy_actions(
                 frontend_source,
@@ -289,16 +317,17 @@ def main() -> None:
             )
 
         if ingame_actions:
-            ingame_criterion_id = f"{folder_name}_InGameCriteria"
-
-            make_parent_criterion(
-                ingame_criterion_id,
-                "ModInUse",
-                parent_mod_id,
-                final_action_criteria,
-                used_criteria_ids,
-                fragment_path,
-            )
+            ingame_criterion_id = None
+            if parent_mod_id:
+                ingame_criterion_id = f"{folder_name}_InGameCriteria"
+                make_parent_criterion(
+                    ingame_criterion_id,
+                    "ModInUse",
+                    parent_mod_id,
+                    final_action_criteria,
+                    used_criteria_ids,
+                    fragment_path,
+                )
 
             copy_actions(
                 ingame_source,
